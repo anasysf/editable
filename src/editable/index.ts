@@ -1,0 +1,246 @@
+import type { JSONValues } from '../types';
+import type { Options, IOptions, DataSrc, DataSrcHTTPMethod, IconSrc } from './types';
+import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
+import DataTable from 'datatables.net-bs5';
+import Column from '../column';
+import EventHandler from './eventHandler';
+
+/**
+ * Class representing an Editable instance.
+ * @internal
+ */
+export default class Editable<
+  TData extends Record<string, JSONValues> = Record<string, never>,
+> {
+  /** The HTML Table Element. */
+  private readonly _table: HTMLTableElement;
+
+  /** The options used by this Editable instance. */
+  private _options!: Options;
+
+  /** The options used by the DataTables instance. */
+  private readonly _dataTableConfig: Config;
+
+  private _dataTable!: Api<TData>;
+
+  private _columns: Map<number, Column> = new Map();
+
+  private _eventHandler: EventHandler<TData>;
+
+  /**
+   * Initiate a new Editable instance.
+   * @param options - The options passed by the user.
+   */
+  public constructor(table: HTMLTableElement, options: IOptions) {
+    this._table = table;
+
+    this.options = options;
+
+    this.columns = this.table;
+
+    this._dataTableConfig = this.setDataTableConfig();
+
+    this.dataTable = this.dataTableConfig;
+
+    this._eventHandler = new EventHandler(this.columns, this.dataTable, this.options);
+
+    this.registerEvents();
+  }
+
+  public get table(): HTMLTableElement {
+    return this._table;
+  }
+
+  private get tbody(): HTMLTableSectionElement | null {
+    return this.table.tBodies.item(0);
+  }
+
+  public get columns(): Map<number, Column> {
+    return this._columns;
+  }
+
+  /**
+   * Get the options.
+   * @internal
+   *
+   * @returns The options used by this Editable instance.
+   */
+  public get options(): Options {
+    return this._options;
+  }
+
+  /**
+   * Get the DataTable instance config.
+   * @internal
+   *
+   * @returns The Config used by the DataTable instance.
+   */
+  public get dataTableConfig(): Config {
+    return this._dataTableConfig;
+  }
+
+  /**
+   * Get the DataTable instance.
+   *
+   * @returns The DataTable instance.
+   */
+  public get dataTable(): Api<TData> {
+    return this._dataTable;
+  }
+
+  private get dataSrc(): DataSrc {
+    return this.options.dataSrc;
+  }
+
+  private get dataSrcURL(): string {
+    return typeof this.dataSrc === 'object' ? this.dataSrc.src : this.dataSrc;
+  }
+
+  private get dataSrcProp(): string {
+    return typeof this.dataSrc === 'object' ? this.dataSrc.prop ?? '' : '';
+  }
+
+  private get dataSrcMethod(): DataSrcHTTPMethod {
+    return typeof this.dataSrc === 'object' ? this.dataSrc.method : 'POST';
+  }
+
+  private get dataSrcData(): Record<PropertyKey, unknown> | undefined {
+    return typeof this.dataSrc === 'object' ? this.dataSrc.data : undefined;
+  }
+
+  private get iconSrc(): IconSrc {
+    return this.options.iconSrc ?? 'fa';
+  }
+
+  private get eventHandler(): EventHandler<TData> {
+    return this._eventHandler;
+  }
+
+  /**
+   * Set the options used by this Editable instance.
+   * @throws {SyntaxError} If the options passed are undefined or if they don't match the structure required.
+   */
+  private set options(options: IOptions) {
+    /** ================ dataSrc option CHECK START ================ */
+    if (!options.dataSrc) throw new SyntaxError('The `dataSrc` option is required.');
+
+    let dataSrc = options.dataSrc;
+
+    if (typeof dataSrc === 'object') {
+      if (!dataSrc.src || dataSrc.src.length === 0)
+        throw new SyntaxError("The dataSrc's `src` property is required.");
+      else if (dataSrc.method.trim().length === 0)
+        dataSrc = {
+          ...dataSrc,
+          method: 'POST',
+        };
+    } else if (dataSrc.trim().length === 0)
+      throw new SyntaxError('The `dataSrc` option is required.');
+    /** ================ dataSrc option CHECK END ================ */
+
+    /** ================ iconSrcMap option CHECK START ================ */
+    const iconSrc = options.iconSrc ?? 'fa';
+    /** ================ iconSrcMap option CHECK END ================ */
+
+    /** ================ updateDataSrc option CHECK START ================ */
+    if (!options.updateDataSrc)
+      throw new SyntaxError('The `updateDataSrc` option is required.');
+
+    let updateDataSrc = options.updateDataSrc;
+
+    if (typeof updateDataSrc === 'object') {
+      if (!updateDataSrc.src || updateDataSrc.src.length === 0)
+        throw new SyntaxError("The updateDataSrc's `src` property is required.");
+      else if (updateDataSrc.method.trim().length === 0)
+        updateDataSrc = {
+          ...updateDataSrc,
+          method: 'POST',
+        };
+      else if (!updateDataSrc.format)
+        updateDataSrc = {
+          ...updateDataSrc,
+          format: 'json',
+        };
+    } else if (updateDataSrc.trim().length === 0)
+      throw new SyntaxError('The `updateDataSrc` option is required.');
+    /** ================ updateDataSrc option CHECK END ================ */
+
+    this._options = {
+      dataSrc,
+      updateDataSrc,
+      iconSrc,
+    };
+  }
+
+  private set dataTable(config: Config) {
+    this._dataTable = new DataTable<TData>(this.table, config);
+  }
+
+  private set columns(table: HTMLTableElement) {
+    const colgroup = this.getColgroup(table);
+    const cols = this.getColsInColgroup(colgroup);
+
+    this._columns = new Map(
+      cols.map((col, idx) => [idx, new Column(col.dataset.options, this.options)]),
+    );
+  }
+
+  private getColgroup(table: HTMLTableElement = this.table): HTMLTableColElement {
+    const colgroups = table.getElementsByTagName('colgroup');
+    if (colgroups.length === 0)
+      throw new ReferenceError(
+        `The <table> element with the id: #${table.id} must contain a <colgroup>.`,
+      );
+
+    const colgroup = colgroups.item(0);
+    if (!colgroup)
+      throw new ReferenceError(
+        `The <table> element with the id: #${table.id} must contain a <colgroup>.`,
+      );
+
+    return colgroup;
+  }
+
+  private getColsInColgroup(colgroup: HTMLTableColElement): HTMLTableColElement[] {
+    if (!colgroup.hasChildNodes())
+      throw new ReferenceError(
+        'The <colgroup> element must contain at least one <col /> element.',
+      );
+
+    const cols = colgroup.getElementsByTagName('col');
+
+    if (cols.length === 0)
+      throw new ReferenceError(
+        'The <colgroup> element must contain at least one <col /> element.',
+      );
+
+    return [...cols];
+  }
+
+  private setDataTableConfig(): Config {
+    const columns: ConfigColumns[] = [...this.columns.values()].map((column) =>
+      column.generateConfigColumns(),
+    );
+
+    return {
+      ajax: {
+        url: this.dataSrcURL,
+        dataSrc: this.dataSrcProp,
+        method: this.dataSrcMethod as string,
+        data: this.dataSrcData,
+      },
+      columns,
+    };
+  }
+
+  private registerEvents(): void {
+    if (!this.tbody)
+      throw new ReferenceError(
+        `Could not find a <tbody> element on this <table>: #${this.table.id}.`,
+      );
+
+    this.tbody.addEventListener('click', (evt) => {
+      this.eventHandler.handle(evt);
+    });
+  }
+}
