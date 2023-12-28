@@ -11611,6 +11611,9 @@ class Editable {
         };
     }
     addRow() {
+        const saveNewRowTr = this.tbody?.querySelector('#save-new-row');
+        if (saveNewRowTr)
+            return;
         const defaultColumns = ['checkbox', 'delete', 'edit'];
         const editors = {};
         for (const column of [...this.columns.values()]) {
@@ -11628,10 +11631,11 @@ class Editable {
         }
         const currentPageRows = this.dataTable.rows({ page: 'current' }).nodes().toArray().at(0);
         const newRow = this.dataTable.row.add(editors);
+        const newRowNode = newRow.node();
+        newRowNode.id = 'save-new-row';
         const iconSrcMap = fieldManager_1.default.iconSrcMap.get(this.iconSrc);
         if (!iconSrcMap)
             throw new ReferenceError(`Expected a valid 'iconSrcMap' instead received: ${iconSrcMap}.`);
-        const newRowNode = newRow.node();
         const newRowEditIcon = newRowNode.querySelector('[name="edit-row-icon"]');
         const newRowDeleteIcon = newRowNode.querySelector('[name="delete-row-icon"]');
         if (!newRowEditIcon || !newRowDeleteIcon)
@@ -11647,9 +11651,6 @@ class Editable {
         else {
             currentPageRows.insertAdjacentElement('beforebegin', newRowNode);
         }
-        newRowEditIcon.addEventListener('click', (evt) => {
-            this.eventHandler.handle(evt);
-        });
     }
     registerEvents() {
         if (!this.tbody)

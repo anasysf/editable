@@ -291,6 +291,9 @@ export default class Editable<
   }
 
   public addRow(): void {
+    const saveNewRowTr = this.tbody?.querySelector('#save-new-row');
+    if (saveNewRowTr) return;
+
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
     const editors: Record<string, (() => HTMLElement['outerHTML']) | undefined> = {};
 
@@ -316,6 +319,8 @@ export default class Editable<
     ).at(0);
 
     const newRow = this.dataTable.row.add(editors);
+    const newRowNode = newRow.node() as HTMLTableRowElement;
+    newRowNode.id = 'save-new-row';
 
     const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
@@ -323,7 +328,6 @@ export default class Editable<
         `Expected a valid 'iconSrcMap' instead received: ${iconSrcMap}.`,
       );
 
-    const newRowNode = newRow.node() as HTMLTableRowElement;
     const newRowEditIcon = newRowNode.querySelector('[name="edit-row-icon"]');
     const newRowDeleteIcon = newRowNode.querySelector('[name="delete-row-icon"]');
 
@@ -354,10 +358,6 @@ export default class Editable<
     } else {
       currentPageRows.insertAdjacentElement('beforebegin', newRowNode);
     }
-
-    (newRowEditIcon as HTMLElement).addEventListener('click', (evt) => {
-      this.eventHandler.handle(evt);
-    });
   }
 
   private registerEvents(): void {
