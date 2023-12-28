@@ -11256,7 +11256,7 @@ class EventHandler {
         const tds = tr.cells;
         if (tds.length === 0)
             throw new ReferenceError(`Could not find a single cell on this row.`);
-        const formData = {};
+        // const formData: Record<string, unknown> = {};
         const row = this.dataTable.row(tr);
         const rowData = row.data();
         [...tds].forEach((td, idx) => {
@@ -11269,12 +11269,12 @@ class EventHandler {
             if (!el)
                 return;
             const field = column.field;
-            formData[field] = el.value;
+            // formData[field as string] = (el as HTMLInputElement).value;
             rowData[field] = el.value;
         });
         const http = new http_1.default(this.updateDataSrcURL);
         try {
-            await http.send({ method: this.updateDataSrcMethod }, this.updateDataSrcFormat, formData);
+            await http.send({ method: this.updateDataSrcMethod }, this.updateDataSrcFormat, rowData);
             row.data(rowData).draw(false);
         }
         catch (err) {
@@ -11326,6 +11326,7 @@ class EventHandler {
             throw new ReferenceError(`Could not find a single cell on this row.`);
         const row = this.dataTable.row(tr);
         const rowData = row.data();
+        // const rowId = row.id();
         const http = new http_1.default(this.postDataSrcURL);
         const formData = {};
         [...tds].forEach((td, idx) => {
@@ -11343,11 +11344,12 @@ class EventHandler {
         });
         try {
             const resData = (await http.send({ method: this.postDataSrcMethod }, this.postDataSrcFormat, formData));
-            if (!(rowIdKey in resData))
+            if (!('content' in resData) || !('result' in resData.content))
                 throw new TypeError('Invalid response: The rowId does not exist in the response JSON data.');
             const data = {
                 ...rowData,
                 ...resData,
+                [rowIdKey]: resData.content.result,
             };
             row.data(data).draw(false);
             target.removeEventListener('click', () => void this.handleOnSaveNewRowClick(target));

@@ -199,7 +199,7 @@ export default class EventHandler<
     if (tds.length === 0)
       throw new ReferenceError(`Could not find a single cell on this row.`);
 
-    const formData: Record<string, unknown> = {};
+    // const formData: Record<string, unknown> = {};
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
@@ -215,7 +215,7 @@ export default class EventHandler<
 
       const field = column.field as keyof TData;
 
-      formData[field as string] = (el as HTMLInputElement).value;
+      // formData[field as string] = (el as HTMLInputElement).value;
       rowData[field] = (el as HTMLInputElement).value as TData[typeof field];
     });
 
@@ -225,7 +225,7 @@ export default class EventHandler<
       await http.send(
         { method: this.updateDataSrcMethod as string },
         this.updateDataSrcFormat,
-        formData,
+        rowData,
       );
 
       row.data(rowData).draw(false);
@@ -293,6 +293,7 @@ export default class EventHandler<
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
+    // const rowId = row.id();
 
     const http = new HTTP(this.postDataSrcURL);
 
@@ -314,13 +315,19 @@ export default class EventHandler<
     });
 
     try {
+      interface Res {
+        readonly content: {
+          readonly result: string | number;
+        };
+      }
+
       const resData = (await http.send(
         { method: this.postDataSrcMethod as string },
         this.postDataSrcFormat,
         formData,
-      )) as TData;
+      )) as unknown as Res;
 
-      if (!(rowIdKey in resData))
+      if (!('content' in resData) || !('result' in resData.content))
         throw new TypeError(
           'Invalid response: The rowId does not exist in the response JSON data.',
         );
@@ -328,6 +335,7 @@ export default class EventHandler<
       const data = {
         ...rowData,
         ...resData,
+        [rowIdKey]: resData.content.result,
       };
 
       row.data(data).draw(false);

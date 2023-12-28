@@ -15,6 +15,10 @@ module.exports = merge(common, {
       new TerserPlugin({
         test: /\.ts(\?.*)?$/i,
         parallel: true,
+        terserOptions: {
+          mangle: true,
+          compress: true,
+        },
       }),
     ],
   },
