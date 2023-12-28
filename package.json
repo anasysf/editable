@@ -7,6 +7,8 @@
     "lint": "eslint --ext .ts,.js src/",
     "lint:fix": "eslint --ext .ts,.js src/ --fix",
     "format": "prettier . --write",
+    "build": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs && webpack --config webpack.prod.cjs",
+    "build:prod": "pnpm format && pnpm lint:fix && webpack --config webpack.prod.cjs",
     "build:dev": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -19,7 +21,9 @@
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jquery": "^1.5.1",
+    "expose-loader": "^4.1.0",
     "prettier": "^3.1.1",
+    "terser-webpack-plugin": "^5.3.9",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
     "webpack": "^5.89.0",

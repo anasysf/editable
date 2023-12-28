@@ -3,6 +3,7 @@ import type { JSONValues } from '../types';
 import type {
   DeleteDataSrcHTTPMethod,
   UpdateDataSrcHTTPMethod,
+  PostDataSrcHTTPMethod,
   HTTPRequestFormat,
   Options,
   IconSrc,
@@ -78,6 +79,24 @@ export default class EventHandler<
       : 'json';
   }
 
+  private get postDataSrcURL(): string {
+    return typeof this.editableOptions.postDataSrc === 'object'
+      ? this.editableOptions.postDataSrc.src
+      : this.editableOptions.postDataSrc;
+  }
+
+  private get postDataSrcMethod(): PostDataSrcHTTPMethod {
+    return typeof this.editableOptions.postDataSrc === 'object'
+      ? this.editableOptions.postDataSrc.method
+      : 'POST';
+  }
+
+  private get postDataSrcFormat(): HTTPRequestFormat {
+    return typeof this.editableOptions.postDataSrc === 'object'
+      ? this.editableOptions.postDataSrc.format ?? 'json'
+      : 'json';
+  }
+
   private get iconSrc(): IconSrc {
     return this.editableOptions.iconSrc ?? 'fa';
   }
@@ -102,6 +121,13 @@ export default class EventHandler<
       }
       case 'save-row-edit-icon': {
         return void this.handleOnSaveEditRowClick(target as HTMLElement);
+      }
+      case 'save-new-row-icon': {
+        return void this.handleOnSaveNewRowClick(target as HTMLElement);
+      }
+      case 'cancel-new-row-icon': {
+        this.handleOnCancelNewRowClick(target as HTMLElement);
+        return;
       }
       default:
         break;
@@ -251,5 +277,77 @@ export default class EventHandler<
 
       throw err;
     }
+  }
+
+  private async handleOnSaveNewRowClick(target: HTMLElement): Promise<void> {
+    const tr = target.closest('tr');
+    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+
+    const rowIdKey = this.editableOptions.rowId;
+    if (!rowIdKey)
+      throw new ReferenceError(`Expected rowId to be set instead received: ${rowIdKey}.`);
+
+    const tds = tr.cells;
+    if (tds.length === 0)
+      throw new ReferenceError(`Could not find a single cell on this row.`);
+
+    const row = this.dataTable.row(tr);
+    const rowData = row.data();
+
+    const http = new HTTP(this.postDataSrcURL);
+
+    const formData: Record<PropertyKey, unknown> = {};
+
+    [...tds].forEach((td, idx) => {
+      const column = this.columns.get(idx);
+      if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
+
+      if (!column.submittable) return;
+
+      const el = td.firstElementChild;
+      if (!el) return;
+
+      const field = column.field as keyof TData;
+
+      formData[field as string] = (el as HTMLInputElement).value;
+      rowData[field] = (el as HTMLInputElement).value as TData[typeof field];
+    });
+
+    try {
+      const resData = (await http.send(
+        { method: this.postDataSrcMethod as string },
+        this.postDataSrcFormat,
+        formData,
+      )) as TData;
+
+      if (!(rowIdKey in resData))
+        throw new TypeError(
+          'Invalid response: The rowId does not exist in the response JSON data.',
+        );
+
+      const data = {
+        ...rowData,
+        ...resData,
+      };
+
+      row.data(data).draw(false);
+
+      target.removeEventListener('click', () => void this.handleOnSaveNewRowClick(target));
+    } catch (err) {
+      if (err instanceof ResponseError)
+        if (this.editableOptions.onHTTPError) {
+          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
+          return;
+        }
+
+      throw err;
+    }
+  }
+
+  private handleOnCancelNewRowClick(target: HTMLElement): void {
+    const tr = target.closest('tr');
+    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+
+    tr.remove();
   }
 }

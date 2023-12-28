@@ -3,8 +3,10 @@ import type { Options, IOptions, DataSrc, DataSrcHTTPMethod, IconSrc } from './t
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
 import Column from '../column';
+import type { ColumnField } from '../column/types';
 import EventHandler from './eventHandler';
 import EditorManager from '../column/editorManager';
+import FieldManager from '../column/fieldManager';
 
 /**
  * Class representing an Editable instance.
@@ -187,7 +189,29 @@ export default class Editable<
         };
     } else if (deleteDataSrc.trim().length === 0)
       throw new SyntaxError('The `deleteDataSrc` option is required.');
-    /** ================ updateDataSrc option CHECK END ================ */
+    /** ================ deleteDataSrc option CHECK END ================ */
+
+    /** ================ postDataSrc option CHECK START ================ */
+    if (!options.postDataSrc) throw new SyntaxError('The `postDataSrc` option is required.');
+
+    let postDataSrc = options.postDataSrc;
+
+    if (typeof postDataSrc === 'object') {
+      if (!postDataSrc.src || postDataSrc.src.length === 0)
+        throw new SyntaxError("The postDataSrc's `src` property is required.");
+      else if (postDataSrc.method.trim().length === 0)
+        postDataSrc = {
+          ...postDataSrc,
+          method: 'POST',
+        };
+      else if (!postDataSrc.format)
+        postDataSrc = {
+          ...postDataSrc,
+          format: 'json',
+        };
+    } else if (postDataSrc.trim().length === 0)
+      throw new SyntaxError('The `postDataSrc` option is required.');
+    /** ================ postDataSrc option CHECK END ================ */
 
     const rowId = options.rowId;
     if (!rowId) throw new ReferenceError('A rowId must be set.');
@@ -197,6 +221,7 @@ export default class Editable<
       dataSrc,
       updateDataSrc,
       deleteDataSrc,
+      postDataSrc,
       iconSrc,
     };
   }
@@ -266,26 +291,73 @@ export default class Editable<
   }
 
   public addRow(): void {
-    const currentPageRows = this.dataTable.rows({ page: 'current' });
-    const currentPageRowNodes = currentPageRows.nodes().toArray() as HTMLTableRowElement[];
-    const fragment = document.createDocumentFragment();
-    const tr = document.createElement('tr'); 
-    const filteredColumns = new Map([...this.columns.entries()].filter(([_idx, column]) => column.field !== 'checkbox' && column.field !== 'delete' && column.field !== 'edit'));
+    const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
+    const editors: Record<string, (() => HTMLElement['outerHTML']) | undefined> = {};
 
-    [...filteredColumns.entries()].forEach(([idx, filteredColumn]) => {
-      if (!filteredColumn.editorOptions) return;
+    for (const column of [...this.columns.values()]) {
+      let editorOptions = column.editorOptions;
 
-      const cell = tr.insertCell(idx);
-      const editorManager = new EditorManager(filteredColumn.editorOptions);
-      const editorHTML = editorManager.generateEditorHTML('');
+      if (!editorOptions)
+        editorOptions = {
+          type: 'string',
+          required: true,
+          disabled: false,
+        };
 
-      cell.appendChild(editorHTML);
+      const editorManager = new EditorManager(editorOptions);
+      editors[column.field] = defaultColumns.includes(column.field)
+        ? undefined
+        : (): HTMLTableCellElement['innerHTML'] =>
+            editorManager.generateEditorHTML('').outerHTML;
+    }
+
+    const currentPageRows = (
+      this.dataTable.rows({ page: 'current' }).nodes().toArray() as HTMLTableRowElement[]
+    ).at(0);
+
+    const newRow = this.dataTable.row.add(editors);
+
+    const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
+    if (!iconSrcMap)
+      throw new ReferenceError(
+        `Expected a valid 'iconSrcMap' instead received: ${iconSrcMap}.`,
+      );
+
+    const newRowNode = newRow.node() as HTMLTableRowElement;
+    const newRowEditIcon = newRowNode.querySelector('[name="edit-row-icon"]');
+    const newRowDeleteIcon = newRowNode.querySelector('[name="delete-row-icon"]');
+
+    if (!newRowEditIcon || !newRowDeleteIcon) return;
+
+    const rowIdx = newRowNode.rowIndex - 1;
+
+    const saveRowIcon = iconSrcMap['save-new-row'];
+    FieldManager.toggleIcon(
+      newRowEditIcon,
+      'save-new-row',
+      'Enregistrer',
+      rowIdx,
+      saveRowIcon,
+    );
+
+    const cancelRowIcon = iconSrcMap['cancel-new-row'];
+    FieldManager.toggleIcon(
+      newRowDeleteIcon,
+      'cancel-new-row',
+      'Annuler',
+      rowIdx,
+      cancelRowIcon,
+    );
+
+    if (!currentPageRows) {
+      newRow.draw(false);
+    } else {
+      currentPageRows.insertAdjacentElement('beforebegin', newRowNode);
+    }
+
+    (newRowEditIcon as HTMLElement).addEventListener('click', (evt) => {
+      this.eventHandler.handle(evt);
     });
-
-    fragment.appendChild(tr);
-    const newCurrentPageRows = [tr, ...currentPageRowNodes];
-
-    currentPageRows.remove().draw(false);
   }
 
   private registerEvents(): void {

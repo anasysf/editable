@@ -1,7 +1,7 @@
 export type ColumnType = 'date' | 'num' | 'num-fmt' | 'html' | 'string';
 export type ColumnField = 'delete' | 'edit' | 'checkbox';
 
-export type EditorType = 'text' | 'string' | 'number';
+export type EditorType = 'text' | 'string' | 'number' | 'email';
 
 export type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 

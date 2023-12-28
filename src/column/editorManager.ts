@@ -21,6 +21,8 @@ export default class EditorManager {
         return this.generateTextInputHTML(defaultValue);
       case 'number':
         return this.generateNumberInputHTML(defaultValue);
+      case 'email':
+        return this.generateEmailInputHTML(defaultValue);
       default:
         throw new TypeError('Invalid editor type.');
     }
@@ -63,6 +65,22 @@ export default class EditorManager {
 
     const input = document.createElement('input');
     input.type = 'string';
+    input.value = defaultValue;
+    input.required = this.editorOptions.required ?? true;
+    input.disabled = this.editorOptions.disabled ?? false;
+    input.readOnly = this.editorOptions.disabled ?? false;
+    input.pattern = this.editorOptions.pattern ?? '';
+
+    return fragment.appendChild(input);
+  }
+
+  private generateEmailInputHTML(
+    defaultValue: HTMLInputElement['value'] = '',
+  ): HTMLInputElement {
+    const fragment = document.createDocumentFragment();
+
+    const input = document.createElement('input');
+    input.type = 'email';
     input.value = defaultValue;
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;

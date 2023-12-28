@@ -9,11 +9,18 @@ module.exports = {
   module: {
     rules: [
       {
+        test: require.resolve('jquery'),
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
+      },
+      {
         test: /\.ts?$/,
         use: {
           loader: 'ts-loader',
           options: {
-            transpileOnly: false,
+            transpileOnly: true,
             happyPackMode: true,
             configFile: path.resolve(__dirname, 'tsconfig.webpack.json'),
           },

@@ -20,6 +20,8 @@ export default class FieldManager {
           edit: 'fa-regular fa-pen-to-square text-primary',
           'save-row-edit': 'fa-solid fa-check text-success',
           'cancel-row-edit': 'fa-solid fa-xmark text-danger',
+          'save-new-row': 'fa-solid fa-check text-success',
+          'cancel-new-row': 'fa-solid fa-xmark text-danger',
         },
       ],
     ]);

@@ -1,6 +1,8 @@
 import type { HTTPMethod } from '../../types';
 import type { Config } from 'datatables.net-bs5';
 
+export type HTTPRequestFormat = 'json' | 'form-data';
+
 export type DataSrcHTTPMethod = Omit<HTTPMethod, 'PUT' | 'PATCH' | 'DELETE'>;
 
 /** The `POST` dataSrc object. */
@@ -16,8 +18,6 @@ export interface IDataSrc<TData extends Record<PropertyKey, unknown> | undefined
 }
 
 export type UpdateDataSrcHTTPMethod = Omit<HTTPMethod, 'GET' | 'DELETE'>;
-export type DeleteDataSrcHTTPMethod = Omit<HTTPMethod, 'GET' | 'PUT' | 'PATCH'>;
-export type HTTPRequestFormat = 'json' | 'form-data';
 
 export interface IUpdateDataSrc<
   TData extends Record<PropertyKey, unknown> | undefined = undefined,
@@ -31,6 +31,8 @@ export interface IUpdateDataSrc<
   readonly format?: HTTPRequestFormat;
 }
 
+export type DeleteDataSrcHTTPMethod = Omit<HTTPMethod, 'GET' | 'PUT' | 'PATCH'>;
+
 export interface IDeleteDataSrc {
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
@@ -39,13 +41,30 @@ export interface IDeleteDataSrc {
   readonly format?: HTTPRequestFormat;
 }
 
+export type PostDataSrcHTTPMethod = Omit<HTTPMethod, 'GET' | 'PUT' | 'PATCH' | 'DELETE'>;
+
+export interface IPostDataSrc {
+  /** The `source`. Could be a `URL` or a `file`. */
+  readonly src: string;
+  /** The method used to retrieve the data. `POST` */
+  readonly method: PostDataSrcHTTPMethod;
+  readonly format?: HTTPRequestFormat;
+}
+
 /** The `dataSrc` object or `URL`. */
 export type DataSrc = IDataSrc | string;
 export type UpdateDataSrc = IUpdateDataSrc | string;
 export type DeleteDataSrc = IDeleteDataSrc | string;
+export type PostDataSrc = IPostDataSrc | string;
 
 export type IconSrc = 'fa';
-type Icons = 'delete' | 'edit' | 'save-row-edit' | 'cancel-row-edit';
+type Icons =
+  | 'delete'
+  | 'edit'
+  | 'save-row-edit'
+  | 'cancel-row-edit'
+  | 'save-new-row'
+  | 'cancel-new-row';
 
 export type IconSrcMap = Map<IconSrc, Record<Icons, HTMLElement['className']>>;
 
@@ -58,6 +77,7 @@ export interface IOptions {
   readonly dataSrc: DataSrc;
   readonly updateDataSrc: UpdateDataSrc;
   readonly deleteDataSrc: DeleteDataSrc;
+  readonly postDataSrc: PostDataSrc;
   readonly iconSrc?: IconSrc;
   readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
 }
