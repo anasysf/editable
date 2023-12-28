@@ -4,6 +4,7 @@ import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
 import Column from '../column';
 import EventHandler from './eventHandler';
+import EditorManager from '../column/editorManager';
 
 /**
  * Class representing an Editable instance.
@@ -165,9 +166,37 @@ export default class Editable<
       throw new SyntaxError('The `updateDataSrc` option is required.');
     /** ================ updateDataSrc option CHECK END ================ */
 
+    /** ================ deleteDataSrc option CHECK START ================ */
+    if (!options.deleteDataSrc)
+      throw new SyntaxError('The `deleteDataSrc` option is required.');
+
+    let deleteDataSrc = options.deleteDataSrc;
+
+    if (typeof deleteDataSrc === 'object') {
+      if (!deleteDataSrc.src || deleteDataSrc.src.length === 0)
+        throw new SyntaxError("The deleteDataSrc's `src` property is required.");
+      else if (deleteDataSrc.method.trim().length === 0)
+        deleteDataSrc = {
+          ...deleteDataSrc,
+          method: 'POST',
+        };
+      else if (!deleteDataSrc.format)
+        deleteDataSrc = {
+          ...deleteDataSrc,
+          format: 'json',
+        };
+    } else if (deleteDataSrc.trim().length === 0)
+      throw new SyntaxError('The `deleteDataSrc` option is required.');
+    /** ================ updateDataSrc option CHECK END ================ */
+
+    const rowId = options.rowId;
+    if (!rowId) throw new ReferenceError('A rowId must be set.');
+
     this._options = {
+      rowId,
       dataSrc,
       updateDataSrc,
+      deleteDataSrc,
       iconSrc,
     };
   }
@@ -222,6 +251,8 @@ export default class Editable<
       column.generateConfigColumns(),
     );
 
+    const rowId = this.options.rowId;
+
     return {
       ajax: {
         url: this.dataSrcURL,
@@ -230,7 +261,31 @@ export default class Editable<
         data: this.dataSrcData,
       },
       columns,
+      rowId,
     };
+  }
+
+  public addRow(): void {
+    const currentPageRows = this.dataTable.rows({ page: 'current' });
+    const currentPageRowNodes = currentPageRows.nodes().toArray() as HTMLTableRowElement[];
+    const fragment = document.createDocumentFragment();
+    const tr = document.createElement('tr'); 
+    const filteredColumns = new Map([...this.columns.entries()].filter(([_idx, column]) => column.field !== 'checkbox' && column.field !== 'delete' && column.field !== 'edit'));
+
+    [...filteredColumns.entries()].forEach(([idx, filteredColumn]) => {
+      if (!filteredColumn.editorOptions) return;
+
+      const cell = tr.insertCell(idx);
+      const editorManager = new EditorManager(filteredColumn.editorOptions);
+      const editorHTML = editorManager.generateEditorHTML('');
+
+      cell.appendChild(editorHTML);
+    });
+
+    fragment.appendChild(tr);
+    const newCurrentPageRows = [tr, ...currentPageRowNodes];
+
+    currentPageRows.remove().draw(false);
   }
 
   private registerEvents(): void {

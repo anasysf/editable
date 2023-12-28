@@ -1,10 +1,17 @@
 import type Column from '../column';
 import type { JSONValues } from '../types';
-import type { UpdateDataSrcHTTPMethod, HTTPRequestFormat, Options, IconSrc } from './types';
+import type {
+  DeleteDataSrcHTTPMethod,
+  UpdateDataSrcHTTPMethod,
+  HTTPRequestFormat,
+  Options,
+  IconSrc,
+} from './types';
 import type { Api } from 'datatables.net-bs5';
 import EditorManager from '../column/editorManager';
 import FieldManager from '../column/fieldManager';
 import HTTP from '../http';
+import ResponseError from '../http/responseError';
 
 export default class EventHandler<
   TData extends Record<string, JSONValues> = Record<string, never>,
@@ -31,26 +38,48 @@ export default class EventHandler<
     return this._dataTable;
   }
 
+  private get editableOptions(): Options {
+    return this._editableOptions;
+  }
+
   private get updateDataSrcURL(): string {
-    return typeof this._editableOptions.updateDataSrc === 'object'
-      ? this._editableOptions.updateDataSrc.src
-      : this._editableOptions.updateDataSrc;
+    return typeof this.editableOptions.updateDataSrc === 'object'
+      ? this.editableOptions.updateDataSrc.src
+      : this.editableOptions.updateDataSrc;
   }
 
   private get updateDataSrcMethod(): UpdateDataSrcHTTPMethod {
-    return typeof this._editableOptions.updateDataSrc === 'object'
-      ? this._editableOptions.updateDataSrc.method
+    return typeof this.editableOptions.updateDataSrc === 'object'
+      ? this.editableOptions.updateDataSrc.method
       : 'POST';
   }
 
   private get updateDataSrcFormat(): HTTPRequestFormat {
-    return typeof this._editableOptions.updateDataSrc === 'object'
-      ? this._editableOptions.updateDataSrc.format ?? 'json'
+    return typeof this.editableOptions.updateDataSrc === 'object'
+      ? this.editableOptions.updateDataSrc.format ?? 'json'
+      : 'json';
+  }
+
+  private get deleteDataSrcURL(): string {
+    return typeof this.editableOptions.deleteDataSrc === 'object'
+      ? this.editableOptions.deleteDataSrc.src
+      : this.editableOptions.deleteDataSrc;
+  }
+
+  private get deleteDataSrcMethod(): DeleteDataSrcHTTPMethod {
+    return typeof this.editableOptions.deleteDataSrc === 'object'
+      ? this.editableOptions.deleteDataSrc.method
+      : 'POST';
+  }
+
+  private get deleteDataSrcFormat(): HTTPRequestFormat {
+    return typeof this.editableOptions.deleteDataSrc === 'object'
+      ? this.editableOptions.deleteDataSrc.format ?? 'json'
       : 'json';
   }
 
   private get iconSrc(): IconSrc {
-    return this._editableOptions.iconSrc ?? 'fa';
+    return this.editableOptions.iconSrc ?? 'fa';
   }
 
   public handle(evt: MouseEvent): void {
@@ -63,6 +92,9 @@ export default class EventHandler<
       case 'edit-row-icon': {
         this.handleOnEditRowClick(target as HTMLElement);
         return;
+      }
+      case 'delete-row-icon': {
+        return void this.handleOnDeleteRowClick(target as HTMLElement);
       }
       case 'cancel-row-edit-icon': {
         this.handleOnCancelEditRowClick(target as HTMLElement);
@@ -155,18 +187,69 @@ export default class EventHandler<
       const el = td.firstElementChild;
       if (!el) return;
 
-      const field = column.field;
-      formData[field] = (el as HTMLInputElement).value;
+      const field = column.field as keyof TData;
+
+      formData[field as string] = (el as HTMLInputElement).value;
+      rowData[field] = (el as HTMLInputElement).value as TData[typeof field];
     });
 
     const http = new HTTP(this.updateDataSrcURL);
 
-    row.data(rowData).draw(false);
+    try {
+      await http.send(
+        { method: this.updateDataSrcMethod as string },
+        this.updateDataSrcFormat,
+        formData,
+      );
 
-    await http.put(
-      formData,
-      { method: this.updateDataSrcMethod as string },
-      this.updateDataSrcFormat,
-    );
+      row.data(rowData).draw(false);
+    } catch (err) {
+      if (err instanceof ResponseError)
+        if (this.editableOptions.onHTTPError) {
+          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
+          return;
+        }
+
+      throw err;
+    }
+  }
+
+  private async handleOnDeleteRowClick(target: HTMLElement): Promise<void> {
+    const tr = target.closest('tr');
+    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+
+    const rowIdKey = this.editableOptions.rowId;
+    if (!rowIdKey)
+      throw new ReferenceError(`Expected rowId to be set instead received: ${rowIdKey}.`);
+
+    const tds = tr.cells;
+    if (tds.length === 0)
+      throw new ReferenceError(`Could not find a single cell on this row.`);
+
+    const row = this.dataTable.row(tr);
+
+    const http = new HTTP(this.deleteDataSrcURL);
+
+    const formData = {
+      [rowIdKey]: row.id(),
+    };
+
+    try {
+      await http.send(
+        { method: this.deleteDataSrcMethod as string },
+        this.deleteDataSrcFormat,
+        formData,
+      );
+
+      row.remove().draw(false);
+    } catch (err) {
+      if (err instanceof ResponseError)
+        if (this.editableOptions.onHTTPError) {
+          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
+          return;
+        }
+
+      throw err;
+    }
   }
 }

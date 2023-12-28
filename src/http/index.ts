@@ -1,4 +1,5 @@
 import type { HTTPRequestFormat } from '../editable/types';
+import ResponseError from './responseError';
 
 export default class HTTP {
   private readonly _URL: RequestInfo | URL;
@@ -11,9 +12,7 @@ export default class HTTP {
     return this._URL;
   }
 
-  private formDataFromObj<TBody extends Record<string, unknown> = Record<string, never>>(
-    obj: TBody,
-  ): FormData {
+  private formDataFromObj<T extends Record<string, unknown>>(obj?: T): FormData {
     const formData = new FormData();
     for (const key in obj) {
       formData.append(key, String(obj[key]));
@@ -22,20 +21,25 @@ export default class HTTP {
     return formData;
   }
 
-  public async put<TBody extends Record<string, unknown> = Record<string, never>>(
-    body: TBody,
+  public async send<T extends Record<string, unknown>>(
     init: RequestInit,
     format: HTTPRequestFormat = 'json',
-  ): Promise<void> {
+    body?: T,
+  ): Promise<T> {
     init = {
       ...init,
       headers: {
         'Content-Type': format === 'json' ? 'application/json' : 'multipart/form-data',
       },
-      body: format === 'json' ? JSON.stringify(body) : this.formDataFromObj(body),
+      body:
+        format === 'json' && body !== undefined
+          ? JSON.stringify(body)
+          : this.formDataFromObj(body),
     };
 
     const res = await fetch(this.URL, init);
-    if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+    if (!res.ok) throw new ResponseError(res.status, res.statusText, res.url);
+
+    return (await res.json()) as T;
   }
 }
