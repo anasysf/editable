@@ -51,7 +51,7 @@
       referrerpolicy="no-referrer"
     ></script>
 
-    <script src="../dist/prod/editable.bundle.js"></script>
+    <script src="../dist/dev/editable.bundle.js"></script>
 
     <script>
       $(function () {
@@ -71,6 +71,9 @@
             method: 'DELETE',
           },
           postDataSrc: 'https://dummyjson.com/users/add',
+          onInputInvalid: function (table, tr, row, el, value, message) {
+            console.log(table, tr, row, el, value, message);
+          },
         });
 
         $('#add-row').click(() => editable.addRow());

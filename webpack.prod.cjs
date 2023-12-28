@@ -13,7 +13,6 @@ module.exports = merge(common, {
     minimize: true,
     minimizer: [
       new TerserPlugin({
-        test: /\.ts(\?.*)?$/i,
         parallel: true,
         terserOptions: {
           mangle: true,

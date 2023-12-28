@@ -10,6 +10,7 @@ import type {
 } from './types';
 import type { Api } from 'datatables.net-bs5';
 import EditorManager from '../column/editorManager';
+import type { ColumnField, HTMLElementWithValue } from '../column/types';
 import FieldManager from '../column/fieldManager';
 import HTTP from '../http';
 import ResponseError from '../http/responseError';
@@ -51,7 +52,7 @@ export default class EventHandler<
 
   private get updateDataSrcMethod(): UpdateDataSrcHTTPMethod {
     return typeof this.editableOptions.updateDataSrc === 'object'
-      ? this.editableOptions.updateDataSrc.method
+      ? this.editableOptions.updateDataSrc.method ?? 'POST'
       : 'POST';
   }
 
@@ -69,7 +70,7 @@ export default class EventHandler<
 
   private get deleteDataSrcMethod(): DeleteDataSrcHTTPMethod {
     return typeof this.editableOptions.deleteDataSrc === 'object'
-      ? this.editableOptions.deleteDataSrc.method
+      ? this.editableOptions.deleteDataSrc.method ?? 'POST'
       : 'POST';
   }
 
@@ -87,7 +88,7 @@ export default class EventHandler<
 
   private get postDataSrcMethod(): PostDataSrcHTTPMethod {
     return typeof this.editableOptions.postDataSrc === 'object'
-      ? this.editableOptions.postDataSrc.method
+      ? this.editableOptions.postDataSrc.method ?? 'POST'
       : 'POST';
   }
 
@@ -216,7 +217,7 @@ export default class EventHandler<
       const field = column.field as keyof TData;
 
       // formData[field as string] = (el as HTMLInputElement).value;
-      rowData[field] = (el as HTMLInputElement).value as TData[typeof field];
+      rowData[field] = (el as HTMLElementWithValue).value as TData[typeof field];
     });
 
     const http = new HTTP(this.updateDataSrcURL);
@@ -293,26 +294,50 @@ export default class EventHandler<
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
+    const table = this.dataTable.table().node() as HTMLTableElement;
     // const rowId = row.id();
 
     const http = new HTTP(this.postDataSrcURL);
 
-    const formData: Record<PropertyKey, unknown> = {};
+    const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
+
+    const invalidElements: HTMLElement[] = [];
 
     [...tds].forEach((td, idx) => {
       const column = this.columns.get(idx);
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
+
+      const field = column.field as keyof TData;
+      if (defaultColumns.includes(field as ColumnField)) return;
 
       if (!column.submittable) return;
 
       const el = td.firstElementChild;
       if (!el) return;
 
-      const field = column.field as keyof TData;
+      if (!(el as HTMLElementWithValue).checkValidity())
+        if (this.editableOptions.onInputInvalid) {
+          this.editableOptions.onInputInvalid(
+            table,
+            tr,
+            row,
+            el as HTMLElement,
+            (el as HTMLElementWithValue).value,
+            (el as HTMLElementWithValue).validationMessage,
+          );
 
-      formData[field as string] = (el as HTMLInputElement).value;
-      rowData[field] = (el as HTMLInputElement).value as TData[typeof field];
+          invalidElements.push(el as HTMLElement);
+          return;
+        } else {
+          invalidElements.push(el as HTMLElement);
+          console.error(el, (el as HTMLElementWithValue).validationMessage);
+        }
+      else {
+        rowData[field] = (el as HTMLElementWithValue).value as TData[typeof field];
+      }
     });
+
+    if (invalidElements.length !== 0) return;
 
     try {
       interface Res {
@@ -324,7 +349,7 @@ export default class EventHandler<
       const resData = (await http.send(
         { method: this.postDataSrcMethod as string },
         this.postDataSrcFormat,
-        formData,
+        rowData,
       )) as unknown as Res;
 
       if (!('content' in resData) || !('result' in resData.content))
@@ -356,6 +381,6 @@ export default class EventHandler<
     const tr = target.closest('tr');
     if (!tr) throw new ReferenceError(`Could not find the closest row.`);
 
-    tr.remove();
+    this.dataTable.row(tr).remove().draw(false);
   }
 }

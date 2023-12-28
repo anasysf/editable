@@ -1,5 +1,5 @@
 import type { HTTPMethod } from '../../types';
-import type { Config } from 'datatables.net-bs5';
+import type { Config, ApiRowMethods } from 'datatables.net-bs5';
 
 export type HTTPRequestFormat = 'json' | 'form-data';
 
@@ -10,7 +10,7 @@ export interface IDataSrc<TData extends Record<PropertyKey, unknown> | undefined
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
   /** The method used to retrieve the data. `POST` */
-  readonly method: DataSrcHTTPMethod;
+  readonly method?: DataSrcHTTPMethod;
   /** The property the data content is in. */
   readonly prop?: string;
   /** Since in this case we're using the `POST` method we might want to send some formData alongside the request. */
@@ -25,7 +25,7 @@ export interface IUpdateDataSrc<
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
   /** The method used to retrieve the data. `POST` */
-  readonly method: UpdateDataSrcHTTPMethod;
+  readonly method?: UpdateDataSrcHTTPMethod;
   /** Since in this case we're using the `POST` method we might want to send some formData alongside the request. */
   readonly data?: TData;
   readonly format?: HTTPRequestFormat;
@@ -37,7 +37,7 @@ export interface IDeleteDataSrc {
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
   /** The method used to retrieve the data. `POST` */
-  readonly method: DeleteDataSrcHTTPMethod;
+  readonly method?: DeleteDataSrcHTTPMethod;
   readonly format?: HTTPRequestFormat;
 }
 
@@ -47,7 +47,7 @@ export interface IPostDataSrc {
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
   /** The method used to retrieve the data. `POST` */
-  readonly method: PostDataSrcHTTPMethod;
+  readonly method?: PostDataSrcHTTPMethod;
   readonly format?: HTTPRequestFormat;
 }
 
@@ -80,6 +80,23 @@ export interface IOptions {
   readonly postDataSrc: PostDataSrc;
   readonly iconSrc?: IconSrc;
   readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
+  readonly onInputInvalid?: <
+    TData extends Record<PropertyKey, unknown> | undefined = undefined,
+  >(
+    table: HTMLTableElement,
+    tr: HTMLTableRowElement,
+    row: ApiRowMethods<TData>,
+    element: HTMLElement,
+    value: unknown,
+    message: string,
+  ) => void;
+  readonly onInputValid?: <TData extends Record<PropertyKey, unknown> | undefined = undefined>(
+    table: HTMLTableElement,
+    tr: HTMLTableRowElement,
+    row: ApiRowMethods<TData>,
+    element: HTMLElement,
+    value: unknown,
+  ) => void;
 }
 
 export type Options = Omit<Config, 'ajax' | 'columns'> & IOptions;

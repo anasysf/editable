@@ -53,7 +53,7 @@ export default class EditorManager {
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;
     input.readOnly = this.editorOptions.disabled ?? false;
-    input.pattern = this.editorOptions.pattern ?? '';
+    this.editorOptions.pattern ? (input.pattern = this.editorOptions.pattern) : undefined;
 
     return fragment.appendChild(input);
   }
@@ -69,7 +69,7 @@ export default class EditorManager {
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;
     input.readOnly = this.editorOptions.disabled ?? false;
-    input.pattern = this.editorOptions.pattern ?? '';
+    this.editorOptions.pattern ? (input.pattern = this.editorOptions.pattern) : undefined;
 
     return fragment.appendChild(input);
   }
@@ -85,7 +85,7 @@ export default class EditorManager {
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;
     input.readOnly = this.editorOptions.disabled ?? false;
-    input.pattern = this.editorOptions.pattern ?? '';
+    this.editorOptions.pattern ? (input.pattern = this.editorOptions.pattern) : undefined;
 
     return fragment.appendChild(input);
   }

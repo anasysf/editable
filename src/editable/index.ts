@@ -104,7 +104,7 @@ export default class Editable<
   }
 
   private get dataSrcMethod(): DataSrcHTTPMethod {
-    return typeof this.dataSrc === 'object' ? this.dataSrc.method : 'POST';
+    return typeof this.dataSrc === 'object' ? this.dataSrc.method ?? 'GET' : 'GET';
   }
 
   private get dataSrcData(): Record<PropertyKey, unknown> | undefined {
@@ -132,10 +132,10 @@ export default class Editable<
     if (typeof dataSrc === 'object') {
       if (!dataSrc.src || dataSrc.src.length === 0)
         throw new SyntaxError("The dataSrc's `src` property is required.");
-      else if (dataSrc.method.trim().length === 0)
+      if (!dataSrc.method || dataSrc.method.trim().length === 0)
         dataSrc = {
           ...dataSrc,
-          method: 'POST',
+          method: 'GET',
         };
     } else if (dataSrc.trim().length === 0)
       throw new SyntaxError('The `dataSrc` option is required.');
@@ -154,12 +154,12 @@ export default class Editable<
     if (typeof updateDataSrc === 'object') {
       if (!updateDataSrc.src || updateDataSrc.src.length === 0)
         throw new SyntaxError("The updateDataSrc's `src` property is required.");
-      else if (updateDataSrc.method.trim().length === 0)
+      if (!updateDataSrc.method || updateDataSrc.method.trim().length === 0)
         updateDataSrc = {
           ...updateDataSrc,
           method: 'POST',
         };
-      else if (!updateDataSrc.format)
+      if (!updateDataSrc.format)
         updateDataSrc = {
           ...updateDataSrc,
           format: 'json',
@@ -177,12 +177,12 @@ export default class Editable<
     if (typeof deleteDataSrc === 'object') {
       if (!deleteDataSrc.src || deleteDataSrc.src.length === 0)
         throw new SyntaxError("The deleteDataSrc's `src` property is required.");
-      else if (deleteDataSrc.method.trim().length === 0)
+      if (!deleteDataSrc.method || deleteDataSrc.method.trim().length === 0)
         deleteDataSrc = {
           ...deleteDataSrc,
           method: 'POST',
         };
-      else if (!deleteDataSrc.format)
+      if (!deleteDataSrc.format)
         deleteDataSrc = {
           ...deleteDataSrc,
           format: 'json',
@@ -199,12 +199,12 @@ export default class Editable<
     if (typeof postDataSrc === 'object') {
       if (!postDataSrc.src || postDataSrc.src.length === 0)
         throw new SyntaxError("The postDataSrc's `src` property is required.");
-      else if (postDataSrc.method.trim().length === 0)
+      if (!postDataSrc.method || postDataSrc.method.trim().length === 0)
         postDataSrc = {
           ...postDataSrc,
           method: 'POST',
         };
-      else if (!postDataSrc.format)
+      if (!postDataSrc.format)
         postDataSrc = {
           ...postDataSrc,
           format: 'json',
@@ -223,6 +223,8 @@ export default class Editable<
       deleteDataSrc,
       postDataSrc,
       iconSrc,
+      onInputInvalid: options.onInputInvalid,
+      onInputValid: options.onInputValid,
     };
   }
 
