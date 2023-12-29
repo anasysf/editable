@@ -4,8 +4,18 @@ import type {
   IOptions,
   DataSrc,
   DataSrcHTTPMethod,
+  UpdateDataSrc,
+  UpdateDataSrcHTTPMethod,
+  DeleteDataSrc,
+  DeleteDataSrcHTTPMethod,
+  PostDataSrc,
+  PostDataSrcHTTPMethod,
+  HTTPRequestFormat,
   IconSrc,
+  IconSrcMap,
+  Icons,
   ClassNames,
+  ClassNamesMap,
 } from './types';
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
@@ -28,12 +38,15 @@ export default class Editable<
   /** The options used by this Editable instance. */
   private _options!: Options;
 
+  private readonly _iconSrcMap: IconSrcMap = new Map();
+  private readonly _classNamesMap: ClassNamesMap = new Map();
+
   /** The options used by the DataTables instance. */
   private readonly _dataTableConfig: Config;
 
   private _dataTable!: Api<TData>;
 
-  private _columns: Map<number, Column> = new Map();
+  private _columns: Map<number, Column<TData>> = new Map();
 
   private _eventHandler: EventHandler<TData>;
 
@@ -46,13 +59,20 @@ export default class Editable<
 
     this.options = options;
 
+    this._iconSrcMap = new Map(
+      Object.entries(this.options.iconSrcMap) as [IconSrc, Record<Icons, string>][],
+    );
+    this._classNamesMap = new Map(
+      Object.entries(this.options.classNamesMap) as [ClassNames, string][],
+    );
+
     this.columns = this.table;
 
     this._dataTableConfig = this.setDataTableConfig();
 
     this.dataTable = this.dataTableConfig;
 
-    this._eventHandler = new EventHandler(this.columns, this.dataTable, this.options);
+    this._eventHandler = new EventHandler(this);
 
     this.registerEvents();
   }
@@ -65,7 +85,7 @@ export default class Editable<
     return this.table.tBodies.item(0);
   }
 
-  public get columns(): Map<number, Column> {
+  public get columns(): Map<number, Column<TData>> {
     return this._columns;
   }
 
@@ -98,6 +118,18 @@ export default class Editable<
     return this._dataTable;
   }
 
+  public get classNamesMap(): ClassNamesMap {
+    return this._classNamesMap;
+  }
+
+  public get iconSrcMap(): IconSrcMap {
+    return this._iconSrcMap;
+  }
+
+  public get iconSrc(): IconSrc {
+    return this.options.iconSrc;
+  }
+
   private get dataSrc(): DataSrc {
     return this.options.dataSrc;
   }
@@ -114,12 +146,70 @@ export default class Editable<
     return typeof this.dataSrc === 'object' ? this.dataSrc.method ?? 'GET' : 'GET';
   }
 
-  private get dataSrcData(): Record<PropertyKey, unknown> | undefined {
+  private get dataSrcData(): TData | undefined {
     return typeof this.dataSrc === 'object' ? this.dataSrc.data : undefined;
   }
 
-  private get iconSrc(): IconSrc {
-    return this.options.iconSrc ?? 'fa';
+  private get updateDataSrc(): UpdateDataSrc {
+    return this.options.updateDataSrc;
+  }
+
+  public get updateDataSrcURL(): string {
+    return typeof this.updateDataSrc === 'object'
+      ? this.updateDataSrc.src
+      : this.updateDataSrc;
+  }
+
+  public get updateDataSrcMethod(): UpdateDataSrcHTTPMethod {
+    return typeof this.updateDataSrc === 'object' ? this.updateDataSrc.method ?? 'PUT' : 'PUT';
+  }
+
+  public get updateDataSrcFormat(): HTTPRequestFormat {
+    return typeof this.updateDataSrc === 'object'
+      ? this.updateDataSrc.format ?? 'json'
+      : 'json';
+  }
+
+  private get deleteDataSrc(): DeleteDataSrc {
+    return this.options.deleteDataSrc;
+  }
+
+  public get deleteDataSrcURL(): string {
+    return typeof this.deleteDataSrc === 'object'
+      ? this.deleteDataSrc.src
+      : this.deleteDataSrc;
+  }
+
+  public get deleteDataSrcMethod(): DeleteDataSrcHTTPMethod {
+    return typeof this.deleteDataSrc === 'object'
+      ? this.deleteDataSrc.method ?? 'DELETE'
+      : 'DELETE';
+  }
+
+  public get deleteDataSrcFormat(): HTTPRequestFormat {
+    return typeof this.deleteDataSrc === 'object'
+      ? this.deleteDataSrc.format ?? 'json'
+      : 'json';
+  }
+
+  private get postDataSrc(): PostDataSrc {
+    return this.options.postDataSrc;
+  }
+
+  public get postDataSrcURL(): string {
+    return typeof this.postDataSrc === 'object' ? this.postDataSrc.src : this.postDataSrc;
+  }
+
+  public get postDataSrcMethod(): PostDataSrcHTTPMethod {
+    return typeof this.postDataSrc === 'object' ? this.postDataSrc.method ?? 'POST' : 'POST';
+  }
+
+  public get postDataSrcFormat(): HTTPRequestFormat {
+    return typeof this.postDataSrc === 'object' ? this.postDataSrc.format ?? 'json' : 'json';
+  }
+
+  public get isEditable(): boolean {
+    return this.options.editable;
   }
 
   private get eventHandler(): EventHandler<TData> {
@@ -131,7 +221,7 @@ export default class Editable<
    * @throws {SyntaxError} If the options passed are undefined or if they don't match the structure required.
    */
   private set options(options: IOptions) {
-    /** ================ dataSrc option CHECK START ================ */
+    /* ================ dataSrc option CHECK START ================ */
     if (!options.dataSrc) throw new SyntaxError('The `dataSrc` option is required.');
 
     let dataSrc = options.dataSrc;
@@ -146,13 +236,25 @@ export default class Editable<
         };
     } else if (dataSrc.trim().length === 0)
       throw new SyntaxError('The `dataSrc` option is required.');
-    /** ================ dataSrc option CHECK END ================ */
+    /* ================ dataSrc option CHECK END ================ */
 
-    /** ================ iconSrcMap option CHECK START ================ */
+    /* ================ iconSrcMap option CHECK START ================ */
     const iconSrc = options.iconSrc ?? 'fa';
-    /** ================ iconSrcMap option CHECK END ================ */
 
-    /** ================ updateDataSrc option CHECK START ================ */
+    const iconSrcMap: Record<IconSrc, Record<Icons, string>> = {
+      fa: {
+        delete: 'fa-regular fa-trash-can text-danger',
+        edit: 'fa-regular fa-pen-to-square text-primary',
+        'save-row-edit': 'fa-solid fa-check text-success',
+        'cancel-row-edit': 'fa-solid fa-xmark text-danger',
+        'save-new-row': 'fa-solid fa-check text-success',
+        'cancel-new-row': 'fa-solid fa-xmark text-danger',
+      },
+      ...options.iconSrcMap,
+    };
+    /* ================ iconSrcMap option CHECK END ================ */
+
+    /* ================ updateDataSrc option CHECK START ================ */
     if (!options.updateDataSrc)
       throw new SyntaxError('The `updateDataSrc` option is required.');
 
@@ -173,9 +275,9 @@ export default class Editable<
         };
     } else if (updateDataSrc.trim().length === 0)
       throw new SyntaxError('The `updateDataSrc` option is required.');
-    /** ================ updateDataSrc option CHECK END ================ */
+    /* ================ updateDataSrc option CHECK END ================ */
 
-    /** ================ deleteDataSrc option CHECK START ================ */
+    /* ================ deleteDataSrc option CHECK START ================ */
     if (!options.deleteDataSrc)
       throw new SyntaxError('The `deleteDataSrc` option is required.');
 
@@ -196,9 +298,9 @@ export default class Editable<
         };
     } else if (deleteDataSrc.trim().length === 0)
       throw new SyntaxError('The `deleteDataSrc` option is required.');
-    /** ================ deleteDataSrc option CHECK END ================ */
+    /* ================ deleteDataSrc option CHECK END ================ */
 
-    /** ================ postDataSrc option CHECK START ================ */
+    /* ================ postDataSrc option CHECK START ================ */
     if (!options.postDataSrc) throw new SyntaxError('The `postDataSrc` option is required.');
 
     let postDataSrc = options.postDataSrc;
@@ -218,7 +320,7 @@ export default class Editable<
         };
     } else if (postDataSrc.trim().length === 0)
       throw new SyntaxError('The `postDataSrc` option is required.');
-    /** ================ postDataSrc option CHECK END ================ */
+    /* ================ postDataSrc option CHECK END ================ */
 
     const rowId = options.rowId;
     if (!rowId) throw new ReferenceError('A rowId must be set.');
@@ -231,6 +333,8 @@ export default class Editable<
       ...options.classNamesMap,
     };
 
+    const editable = options.editable ?? true;
+
     this._options = {
       rowId,
       dataSrc,
@@ -238,9 +342,12 @@ export default class Editable<
       deleteDataSrc,
       postDataSrc,
       iconSrc,
+      iconSrcMap,
       classNamesMap,
+      editable,
       onInputInvalid: options.onInputInvalid,
       onInputValid: options.onInputValid,
+      onUpdated: options.onUpdated,
     };
   }
 
@@ -253,7 +360,7 @@ export default class Editable<
     const cols = this.getColsInColgroup(colgroup);
 
     this._columns = new Map(
-      cols.map((col, idx) => [idx, new Column(col.dataset.options, this.options)]),
+      cols.map((col, idx) => [idx, new Column(col.dataset.options, this)]),
     );
   }
 
@@ -315,7 +422,7 @@ export default class Editable<
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
     const editors: Record<string, (() => HTMLElement['outerHTML']) | undefined> = {};
 
-    for (const column of [...this.columns.values()]) {
+    for (const column of Array.from(this.columns.values())) {
       let editorOptions = column.editorOptions;
 
       if (!editorOptions)
@@ -325,7 +432,7 @@ export default class Editable<
           disabled: false,
         };
 
-      const editorManager = new EditorManager(editorOptions, this.options);
+      const editorManager = new EditorManager(column);
       editors[column.field] = defaultColumns.includes(column.field)
         ? undefined
         : (): HTMLTableCellElement['innerHTML'] =>
@@ -340,7 +447,7 @@ export default class Editable<
     const newRowNode = newRow.node() as HTMLTableRowElement;
     newRowNode.id = 'save-new-row';
 
-    const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
+    const iconSrcMap = this.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
       throw new ReferenceError(
         `Expected a valid 'iconSrcMap' instead received: ${iconSrcMap}.`,
@@ -385,7 +492,7 @@ export default class Editable<
       );
 
     this.tbody.addEventListener('click', (evt) => {
-      this.eventHandler.handle(evt);
+      this.eventHandler.handleByName(evt);
     });
   }
 }

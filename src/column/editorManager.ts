@@ -1,50 +1,63 @@
+import type Column from './';
 import type { IEditor, HTMLElementWithValue } from './types';
-import type { Options, ClassNamesMap, ClassNames } from '@/editable/types';
+import type { ClassNamesMap } from '@/editable/types';
+import type { JSONValues } from '../types';
 
-export default class EditorManager {
-  private readonly _editorOptions: IEditor;
-  private readonly _editableOptions: Options;
-  private readonly _classNamesMap: ClassNamesMap = new Map();
+export default class EditorManager<
+  TData extends Record<string, JSONValues> = Record<string, never>,
+> {
+  private readonly _column: Column<TData>;
 
-  public constructor(editorOptions: IEditor, editableOptions: Options) {
-    this._editorOptions = editorOptions;
-    this._editableOptions = editableOptions;
-
-    this._classNamesMap = new Map(
-      Object.entries(this.editableOptions.classNamesMap ?? {}) as [
-        ClassNames,
-        HTMLElement['innerHTML'],
-      ][],
-    );
+  public constructor(column: Column<TData>) {
+    this._column = column;
   }
 
-  private get editorOptions(): IEditor {
-    return this._editorOptions;
-  }
-
-  private get editableOptions(): Options {
-    return this._editableOptions;
+  private get column(): Column<TData> {
+    return this._column;
   }
 
   private get classNamesMap(): ClassNamesMap {
-    return this._classNamesMap;
+    return this.column.editable.classNamesMap;
+  }
+
+  private get editorOptions(): IEditor {
+    return (
+      this.column.editorOptions ??
+      ({
+        type: 'string',
+        required: true,
+        disabled: false,
+      } as const)
+    );
   }
 
   public generateEditorHTML(
-    defaultValue: HTMLElementWithValue['value'],
+    defaultValue?: HTMLElementWithValue['value'] | HTMLInputElement['valueAsNumber'],
   ): HTMLElementWithValue {
     switch (this.editorOptions.type) {
       case 'text':
-        return this.generateTextAreaHTML(defaultValue);
+        return this.generateTextAreaHTML(String(defaultValue ?? ''));
       case 'string':
-        return this.generateTextInputHTML(defaultValue);
+        return this.generateTextInputHTML(String(defaultValue ?? ''));
       case 'number':
-        return this.generateNumberInputHTML(defaultValue);
+        return this.generateNumberInputHTML(Number(defaultValue ?? 0));
       case 'email':
-        return this.generateEmailInputHTML(defaultValue);
+        return this.generateEmailInputHTML(String(defaultValue ?? ''));
       default:
         throw new TypeError('Invalid editor type.');
     }
+  }
+
+  public checkValidity(element: HTMLElementWithValue): boolean {
+    return element.checkValidity();
+  }
+
+  public static isHTMLElementWithValue(element: Element): element is HTMLElementWithValue {
+    return (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement ||
+      element instanceof HTMLSelectElement
+    );
   }
 
   private generateTextAreaHTML(
@@ -55,6 +68,7 @@ export default class EditorManager {
 
     const textArea = document.createElement('textarea');
     textArea.className = className;
+    textArea.placeholder = this.column.field;
     textArea.value = defaultValue;
     textArea.required = this.editorOptions.required ?? true;
     textArea.disabled = this.editorOptions.disabled ?? false;
@@ -71,6 +85,7 @@ export default class EditorManager {
 
     const input = document.createElement('input');
     input.className = className;
+    input.placeholder = this.column.field;
     input.type = 'string';
     input.value = defaultValue;
     input.required = this.editorOptions.required ?? true;
@@ -82,15 +97,16 @@ export default class EditorManager {
   }
 
   private generateNumberInputHTML(
-    defaultValue: HTMLInputElement['value'] = '',
+    defaultValue: HTMLInputElement['valueAsNumber'] = 0,
   ): HTMLInputElement {
     const fragment = document.createDocumentFragment();
     const className = this.classNamesMap.get('inp-num') ?? 'form-control form-control-sm';
 
     const input = document.createElement('input');
     input.className = className;
-    input.type = 'string';
-    input.value = defaultValue;
+    input.type = 'number';
+    input.placeholder = this.column.field;
+    input.valueAsNumber = defaultValue;
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;
     input.readOnly = this.editorOptions.disabled ?? false;
@@ -108,6 +124,7 @@ export default class EditorManager {
     const input = document.createElement('input');
     input.className = className;
     input.type = 'email';
+    input.placeholder = this.column.field;
     input.value = defaultValue;
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;

@@ -8,6 +8,12 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css"
+    />
+
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -17,8 +23,8 @@
     />
   </head>
 
-  <body>
-    <table class="table table-striped table-hover" id="data-table" style="width: 100%">
+  <body class="container-fluid mt-4">
+    <table id="data-table" class="table table-striped" style="width: 100%">
       <colgroup>
         <col data-options='{ "field": "firstName" }' />
         <col data-options='{ "field": "lastName" }' />
@@ -38,22 +44,9 @@
     </table>
     <button id="add-row" class="btn btn-primary">ADD ROW</button>
 
-    <!-- <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
-      integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-  ></script> -->
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.min.js"
-      integrity="sha512-WW8/jxkELe2CAiE4LvQfwm1rajOS8PHasCCx+knHG0gBHt8EXxS6T6tJRTGuDQVnluuAvMxWF4j8SNFDKceLFg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
-
     <script src="../dist/dev/editable.bundle.js"></script>
 
-    <script>
+    <script defer>
       $(function () {
         const editable = $('#data-table').editable({
           rowId: 'id',

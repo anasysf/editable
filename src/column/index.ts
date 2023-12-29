@@ -1,19 +1,25 @@
 import type { ColumnType, ColumnField, IDataOptions, IEditor } from './types';
+import type Editable from '../editable';
 import type { Options, IconSrc } from '../editable/types';
 import type { ConfigColumns } from 'datatables.net-bs5';
+import type { JSONValues } from '../types';
 import FieldManager from './fieldManager';
 
-export default class Column {
+export default class Column<TData extends Record<string, JSONValues> = Record<string, never>> {
   private _dataOptions!: IDataOptions;
-  private readonly _editableOptions: Options;
+  private readonly _editable: Editable<TData>;
 
-  public constructor(dataOptionsStr: DOMStringMap[string], editableOptions: Options) {
+  public constructor(dataOptionsStr: DOMStringMap[string], editable: Editable<TData>) {
     this.dataOptions = dataOptionsStr;
-    this._editableOptions = editableOptions;
+    this._editable = editable;
   }
 
   private get dataOptions(): IDataOptions {
     return this._dataOptions;
+  }
+
+  public get editable(): Editable<TData> {
+    return this._editable;
   }
 
   public get field(): ColumnField {
@@ -25,11 +31,11 @@ export default class Column {
   }
 
   private get editableOptions(): Options {
-    return this._editableOptions;
+    return this.editable.options;
   }
 
   private get iconSrc(): IconSrc {
-    return this.editableOptions.iconSrc ?? 'fa';
+    return this.editableOptions.iconSrc;
   }
 
   public get editorOptions(): IEditor | undefined {
@@ -38,6 +44,10 @@ export default class Column {
 
   public get submittable(): boolean {
     return this.dataOptions.submittable ?? true;
+  }
+
+  public get isEditable(): boolean {
+    return this.editorOptions !== undefined;
   }
 
   private set dataOptions(dataOptionsStr: DOMStringMap[string]) {

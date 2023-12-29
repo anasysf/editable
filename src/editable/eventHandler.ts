@@ -14,177 +14,201 @@ import type { ColumnField, HTMLElementWithValue } from '../column/types';
 import FieldManager from '../column/fieldManager';
 import HTTP from '../http';
 import ResponseError from '../http/responseError';
+import type Editable from './';
 
 export default class EventHandler<
   TData extends Record<string, JSONValues> = Record<string, never>,
 > {
-  private readonly _columns: Map<number, Column> = new Map();
-  private readonly _dataTable: Api<TData>;
-  private readonly _editableOptions: Options;
+  private readonly _editable: Editable<TData>;
 
-  public constructor(
-    columns: Map<number, Column>,
-    dataTable: Api<TData>,
-    editableOptions: Options,
-  ) {
-    this._columns = columns;
-    this._dataTable = dataTable;
-    this._editableOptions = editableOptions;
+  public constructor(editable: Editable<TData>) {
+    this._editable = editable;
   }
 
-  private get columns(): Map<number, Column> {
-    return this._columns;
+  private get editable(): Editable<TData> {
+    return this._editable;
+  }
+
+  private get columns(): Map<number, Column<TData>> {
+    return this.editable.columns;
+  }
+
+  private get columnsValues(): Column<TData>[] {
+    return Array.from(this.columns.values());
   }
 
   private get dataTable(): Api<TData> {
-    return this._dataTable;
+    return this.editable.dataTable;
   }
 
   private get editableOptions(): Options {
-    return this._editableOptions;
+    return this.editable.options;
   }
 
   private get updateDataSrcURL(): string {
-    return typeof this.editableOptions.updateDataSrc === 'object'
-      ? this.editableOptions.updateDataSrc.src
-      : this.editableOptions.updateDataSrc;
+    return this.editable.updateDataSrcURL;
   }
 
   private get updateDataSrcMethod(): UpdateDataSrcHTTPMethod {
-    return typeof this.editableOptions.updateDataSrc === 'object'
-      ? this.editableOptions.updateDataSrc.method ?? 'POST'
-      : 'POST';
+    return this.editable.updateDataSrcMethod;
   }
 
   private get updateDataSrcFormat(): HTTPRequestFormat {
-    return typeof this.editableOptions.updateDataSrc === 'object'
-      ? this.editableOptions.updateDataSrc.format ?? 'json'
-      : 'json';
+    return this.editable.updateDataSrcFormat;
   }
 
   private get deleteDataSrcURL(): string {
-    return typeof this.editableOptions.deleteDataSrc === 'object'
-      ? this.editableOptions.deleteDataSrc.src
-      : this.editableOptions.deleteDataSrc;
+    return this.editable.deleteDataSrcURL;
   }
 
   private get deleteDataSrcMethod(): DeleteDataSrcHTTPMethod {
-    return typeof this.editableOptions.deleteDataSrc === 'object'
-      ? this.editableOptions.deleteDataSrc.method ?? 'POST'
-      : 'POST';
+    return this.editable.deleteDataSrcMethod;
   }
 
   private get deleteDataSrcFormat(): HTTPRequestFormat {
-    return typeof this.editableOptions.deleteDataSrc === 'object'
-      ? this.editableOptions.deleteDataSrc.format ?? 'json'
-      : 'json';
+    return this.editable.deleteDataSrcFormat;
   }
 
   private get postDataSrcURL(): string {
-    return typeof this.editableOptions.postDataSrc === 'object'
-      ? this.editableOptions.postDataSrc.src
-      : this.editableOptions.postDataSrc;
+    return this.editable.postDataSrcURL;
   }
 
   private get postDataSrcMethod(): PostDataSrcHTTPMethod {
-    return typeof this.editableOptions.postDataSrc === 'object'
-      ? this.editableOptions.postDataSrc.method ?? 'POST'
-      : 'POST';
+    return this.editable.postDataSrcMethod;
   }
 
   private get postDataSrcFormat(): HTTPRequestFormat {
-    return typeof this.editableOptions.postDataSrc === 'object'
-      ? this.editableOptions.postDataSrc.format ?? 'json'
-      : 'json';
+    return this.editable.postDataSrcFormat;
   }
 
   private get iconSrc(): IconSrc {
-    return this.editableOptions.iconSrc ?? 'fa';
+    return this.editable.iconSrc;
   }
 
-  public handle(evt: MouseEvent): void {
+  public handleByName(evt: MouseEvent): void {
     const target = evt.target;
-    if (!target) return;
 
-    const targetName = (target as HTMLElement).getAttribute('name');
+    if (!target || !(target instanceof HTMLElement)) return;
+
+    const targetName = target.getAttribute('name');
+    if (!targetName || targetName.trim().length === 0) return;
 
     switch (targetName) {
       case 'edit-row-icon': {
-        this.handleOnEditRowClick(target as HTMLElement);
-        return;
+        this.handleOnEditRowClick(target);
+        break;
       }
       case 'delete-row-icon': {
-        return void this.handleOnDeleteRowClick(target as HTMLElement);
+        void this.handleOnDeleteRowClick(target);
+        break;
       }
       case 'cancel-row-edit-icon': {
-        this.handleOnCancelEditRowClick(target as HTMLElement);
-        return;
+        this.handleOnCancelEditRowClick(target);
+        break;
       }
       case 'save-row-edit-icon': {
-        return void this.handleOnSaveEditRowClick(target as HTMLElement);
+        void this.handleOnSaveEditRowClick(target);
+        break;
       }
       case 'save-new-row-icon': {
-        return void this.handleOnSaveNewRowClick(target as HTMLElement);
+        void this.handleOnSaveNewRowClick(target);
+        break;
       }
       case 'cancel-new-row-icon': {
-        this.handleOnCancelNewRowClick(target as HTMLElement);
-        return;
+        this.handleOnCancelNewRowClick(target);
+        break;
       }
       default:
         break;
     }
   }
 
-  private handleOnEditRowClick(target: HTMLElement): void {
-    const hasEditor = [...this.columns.values()].some((column) => column.editorOptions);
-    if (!hasEditor) return;
+  private getTrFromTarget(target: HTMLElement): HTMLTableRowElement {
+    if (!(target instanceof HTMLTableRowElement)) {
+      const tr = target.closest('tr');
+      if (!tr)
+        throw new ReferenceError('Could not find the closest <tr> element to the target.');
 
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+      return tr;
+    }
 
-    const deleteIconBtn = tr.querySelector('[name="delete-row-icon"]');
-    if (!deleteIconBtn)
-      throw new ReferenceError('Could not find a delete button on this row.');
+    return target;
+  }
 
+  private getElementByName<T extends HTMLElement = HTMLElement>(
+    source: HTMLElement,
+    name: string,
+  ): T {
+    const element = source.querySelector<T>(`[name="${name}"]`);
+    if (!element)
+      throw new ReferenceError(`Could not find an element with the name: ${name}.`);
+
+    return element;
+  }
+
+  private getTrIndex(tr: HTMLTableRowElement): number {
+    return tr.rowIndex === -1 ? tr.rowIndex : tr.rowIndex - 1;
+  }
+
+  private getCellsInTr(tr: HTMLTableRowElement): HTMLTableCellElement[] {
     const tds = tr.cells;
     if (tds.length === 0)
-      throw new ReferenceError(`Could not find a single cell on this row.`);
+      throw new RangeError(
+        `Could not find a single <td> on this <tr> element. row-index: ${this.getTrIndex(
+          tr,
+        )}.`,
+      );
+
+    return Array.from(tds);
+  }
+
+  private handleOnEditRowClick(target: HTMLElement): void {
+    if (!this.editable.isEditable)
+      throw new SyntaxError(
+        "Seems like you're trying to edit a row on a non-editable <table>. Please make sure you have `editable` set to `true` in the options.",
+      );
+
+    const hasEditor = this.columnsValues.some((column) => column.isEditable);
+    if (!hasEditor) return;
+
+    const tr = this.getTrFromTarget(target);
+    const tds = this.getCellsInTr(tr);
+
+    const deleteBtn = this.getElementByName(tr, 'delete-row-icon');
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
     const rowIdx = row.index();
 
-    [...tds].forEach((td, idx) => {
+    tds.forEach((td, idx) => {
       const column = this.columns.get(idx);
-      if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
+      if (!column) throw new RangeError(`Could not find a column at index: ${idx}.`);
 
       const editorOptions = column.editorOptions;
-
       if (!editorOptions) return;
-      const editorManager = new EditorManager(editorOptions, this.editableOptions);
-      const field = column.field as keyof TData;
 
-      const editor = editorManager.generateEditorHTML(rowData[field] as string);
+      const editorManager = new EditorManager(column);
+      const field = column.field as keyof TData;
+      const editor = editorManager.generateEditorHTML(rowData[field] as string | number);
 
       td.firstChild ? td.replaceChild(editor, td.firstChild) : td.appendChild(editor);
     });
 
-    const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
+    const iconSrcMap = this.editable.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
       throw new ReferenceError(
-        `Expected a valid 'iconSrcMap' instead received: ${iconSrcMap}.`,
+        `Could not find a valid iconSrcMap for the iconSrc provided: ${this.iconSrc}.`,
       );
 
     const editIcon = iconSrcMap['save-row-edit'];
     FieldManager.toggleIcon(target, 'save-row-edit', 'Enregistrer', rowIdx, editIcon);
 
     const deleteIcon = iconSrcMap['cancel-row-edit'];
-    FieldManager.toggleIcon(deleteIconBtn, 'cancel-row-edit', 'Annuler', rowIdx, deleteIcon);
+    FieldManager.toggleIcon(deleteBtn, 'cancel-row-edit', 'Annuler', rowIdx, deleteIcon);
   }
 
   private handleOnCancelEditRowClick(target: HTMLElement): void {
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+    const tr = this.getTrFromTarget(target);
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
@@ -193,35 +217,50 @@ export default class EventHandler<
   }
 
   private async handleOnSaveEditRowClick(target: HTMLElement): Promise<void> {
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+    const tr = this.getTrFromTarget(target);
+    const tds = this.getCellsInTr(tr);
 
-    const tds = tr.cells;
-    if (tds.length === 0)
-      throw new ReferenceError(`Could not find a single cell on this row.`);
-
-    // const formData: Record<string, unknown> = {};
-
+    const table = this.dataTable.table().node() as HTMLTableElement;
     const row = this.dataTable.row(tr);
     const rowData = row.data();
+    const oldRowData = structuredClone(rowData);
 
-    [...tds].forEach((td, idx) => {
+    const invalidElements: HTMLElementWithValue[] = [];
+    tds.forEach((td, idx) => {
       const column = this.columns.get(idx);
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
-
       if (!column.submittable) return;
 
       const el = td.firstElementChild;
-      if (!el) return;
+      if (!el || !EditorManager.isHTMLElementWithValue(el)) return;
+
+      const editorManager = new EditorManager(column);
+      if (!editorManager.checkValidity(el)) {
+        if (this.editableOptions.onInputInvalid)
+          this.editableOptions.onInputInvalid(
+            el.validationMessage,
+            table,
+            tr,
+            row,
+            el,
+            el.value,
+          );
+        else console.error(el, el.validationMessage);
+
+        invalidElements.push(el);
+        return;
+      }
 
       const field = column.field as keyof TData;
+      rowData[field] = el.value as TData[typeof field];
 
-      // formData[field as string] = (el as HTMLInputElement).value;
-      rowData[field] = (el as HTMLElementWithValue).value as TData[typeof field];
+      if (this.editableOptions.onInputValid)
+        this.editableOptions.onInputValid(table, tr, row, el, el.value);
     });
 
-    const http = new HTTP(this.updateDataSrcURL);
+    if (invalidElements.length !== 0) return;
 
+    const http = new HTTP(this.updateDataSrcURL);
     try {
       await http.send(
         { method: this.updateDataSrcMethod as string },
@@ -230,6 +269,8 @@ export default class EventHandler<
       );
 
       row.data(rowData).draw(false);
+      if (this.editableOptions.onUpdated)
+        this.editableOptions.onUpdated(table, tr, row, rowData, oldRowData);
     } catch (err) {
       if (err instanceof ResponseError)
         if (this.editableOptions.onHTTPError) {
@@ -242,25 +283,15 @@ export default class EventHandler<
   }
 
   private async handleOnDeleteRowClick(target: HTMLElement): Promise<void> {
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
-
-    const rowIdKey = this.editableOptions.rowId;
-    if (!rowIdKey)
-      throw new ReferenceError(`Expected rowId to be set instead received: ${rowIdKey}.`);
-
-    const tds = tr.cells;
-    if (tds.length === 0)
-      throw new ReferenceError(`Could not find a single cell on this row.`);
-
+    const tr = this.getTrFromTarget(target);
     const row = this.dataTable.row(tr);
 
-    const http = new HTTP(this.deleteDataSrcURL);
-
+    const rowIdKey = this.editableOptions.rowId;
     const formData = {
       [rowIdKey]: row.id(),
     };
 
+    const http = new HTTP(this.deleteDataSrcURL);
     try {
       await http.send(
         { method: this.deleteDataSrcMethod as string },
@@ -281,62 +312,51 @@ export default class EventHandler<
   }
 
   private async handleOnSaveNewRowClick(target: HTMLElement): Promise<void> {
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+    const tr = this.getTrFromTarget(target);
+    const tds = this.getCellsInTr(tr);
 
     const rowIdKey = this.editableOptions.rowId;
-    if (!rowIdKey)
-      throw new ReferenceError(`Expected rowId to be set instead received: ${rowIdKey}.`);
-
-    const tds = tr.cells;
-    if (tds.length === 0)
-      throw new ReferenceError(`Could not find a single cell on this row.`);
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
     const table = this.dataTable.table().node() as HTMLTableElement;
-    // const rowId = row.id();
 
     const http = new HTTP(this.postDataSrcURL);
-
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
-
     const invalidElements: HTMLElement[] = [];
-
-    [...tds].forEach((td, idx) => {
+    tds.forEach((td, idx) => {
       const column = this.columns.get(idx);
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
+      if (!column.submittable) return;
 
       const field = column.field as keyof TData;
       if (defaultColumns.includes(field as ColumnField)) return;
 
-      if (!column.submittable) return;
-
       const el = td.firstElementChild;
-      if (!el) return;
+      if (!el || !EditorManager.isHTMLElementWithValue(el)) return;
 
-      if (!(el as HTMLElementWithValue).checkValidity())
-        if (this.editableOptions.onInputInvalid) {
+      const editorManager = new EditorManager(column);
+
+      if (!editorManager.checkValidity(el)) {
+        if (this.editableOptions.onInputInvalid)
           this.editableOptions.onInputInvalid(
+            el.validationMessage,
             table,
             tr,
             row,
-            el as HTMLElement,
-            (el as HTMLElementWithValue).value,
-            (el as HTMLElementWithValue).validationMessage,
+            el,
+            el.value,
           );
+        else console.error(el, el.validationMessage);
 
-          invalidElements.push(el as HTMLElement);
-          return;
-        } else {
-          invalidElements.push(el as HTMLElement);
-          console.error(el, (el as HTMLElementWithValue).validationMessage);
-        }
-      else {
-        rowData[field] = (el as HTMLElementWithValue).value as TData[typeof field];
+        invalidElements.push(el);
+        return;
+      } else {
+        rowData[field] = el.value as TData[typeof field];
+        if (this.editableOptions.onInputValid)
+          this.editableOptions.onInputValid(table, tr, row, el, el.value);
       }
     });
-
     if (invalidElements.length !== 0) return;
 
     try {

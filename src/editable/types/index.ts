@@ -1,5 +1,6 @@
-import type { HTTPMethod } from '@/types';
+import type { HTTPMethod, JSONValues } from '@/types';
 import type { Config, ApiRowMethods } from 'datatables.net-bs5';
+import type { HTMLElementWithValue } from '../../column/types';
 
 export type HTTPRequestFormat = 'json' | 'form-data';
 
@@ -19,15 +20,11 @@ export interface IDataSrc<TData extends Record<PropertyKey, unknown> | undefined
 
 export type UpdateDataSrcHTTPMethod = Omit<HTTPMethod, 'GET' | 'DELETE'>;
 
-export interface IUpdateDataSrc<
-  TData extends Record<PropertyKey, unknown> | undefined = undefined,
-> {
+export interface IUpdateDataSrc {
   /** The `source`. Could be a `URL` or a `file`. */
   readonly src: string;
   /** The method used to retrieve the data. `POST` */
   readonly method?: UpdateDataSrcHTTPMethod;
-  /** Since in this case we're using the `POST` method we might want to send some formData alongside the request. */
-  readonly data?: TData;
   readonly format?: HTTPRequestFormat;
 }
 
@@ -58,7 +55,7 @@ export type DeleteDataSrc = IDeleteDataSrc | string;
 export type PostDataSrc = IPostDataSrc | string;
 
 export type IconSrc = 'fa';
-type Icons =
+export type Icons =
   | 'delete'
   | 'edit'
   | 'save-row-edit'
@@ -82,26 +79,35 @@ export interface IOptions {
   readonly updateDataSrc: UpdateDataSrc;
   readonly deleteDataSrc: DeleteDataSrc;
   readonly postDataSrc: PostDataSrc;
+  readonly editable?: boolean;
   readonly iconSrc?: IconSrc;
+  readonly iconSrcMap?: Record<IconSrc, Record<Icons, HTMLElement['className']>>;
   readonly classNamesMap?: Record<ClassNames, HTMLElement['className']>;
   readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
-  readonly onInputInvalid?: <
-    TData extends Record<PropertyKey, unknown> | undefined = undefined,
-  >(
+  readonly onInputInvalid?: <TData extends Record<string, JSONValues> = Record<string, never>>(
+    message: HTMLElementWithValue['validationMessage'],
     table: HTMLTableElement,
     tr: HTMLTableRowElement,
     row: ApiRowMethods<TData>,
-    element: HTMLElement,
-    value: unknown,
-    message: string,
+    element: HTMLElementWithValue,
+    value: HTMLElementWithValue['value'],
   ) => void;
-  readonly onInputValid?: <TData extends Record<PropertyKey, unknown> | undefined = undefined>(
+  readonly onInputValid?: <TData extends Record<string, JSONValues> = Record<string, never>>(
     table: HTMLTableElement,
     tr: HTMLTableRowElement,
     row: ApiRowMethods<TData>,
-    element: HTMLElement,
-    value: unknown,
+    element: HTMLElementWithValue,
+    value: HTMLElementWithValue['value'],
+  ) => void;
+  readonly onUpdated?: <TData extends Record<string, JSONValues> = Record<string, never>>(
+    table: HTMLTableElement,
+    tr: HTMLTableRowElement,
+    row: ApiRowMethods<TData>,
+    rowData: TData,
+    oldRowData: TData,
   ) => void;
 }
 
-export type Options = Omit<Config, 'ajax' | 'columns'> & IOptions;
+export type Options = Omit<Config, 'ajax' | 'columns'> &
+  Required<Pick<IOptions, 'classNamesMap' | 'editable' | 'iconSrc' | 'iconSrcMap'>> &
+  IOptions;
