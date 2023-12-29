@@ -1,7 +1,5 @@
 'use strict';
 
-const path = require('path');
-
 /** @type {import('webpack').Configuration} */
 module.exports = {
   entry: './src/index.ts',
@@ -22,7 +20,6 @@ module.exports = {
           options: {
             transpileOnly: true,
             happyPackMode: true,
-            configFile: path.resolve(__dirname, 'tsconfig.webpack.json'),
           },
         },
         exclude: /node_modules/,

@@ -1,9 +1,16 @@
-import type { JSONValues } from '../types';
-import type { Options, IOptions, DataSrc, DataSrcHTTPMethod, IconSrc } from './types';
+import type { JSONValues } from '@/types';
+import type {
+  Options,
+  IOptions,
+  DataSrc,
+  DataSrcHTTPMethod,
+  IconSrc,
+  ClassNames,
+} from './types';
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
 import Column from '../column';
-import type { ColumnField } from '../column/types';
+import type { ColumnField } from '@/column/types';
 import EventHandler from './eventHandler';
 import EditorManager from '../column/editorManager';
 import FieldManager from '../column/fieldManager';
@@ -216,6 +223,14 @@ export default class Editable<
     const rowId = options.rowId;
     if (!rowId) throw new ReferenceError('A rowId must be set.');
 
+    const classNamesMap: Record<ClassNames, HTMLElement['className']> = {
+      'inp-string': 'form-control form-control-sm',
+      'inp-num': 'form-control form-control-sm',
+      'inp-email': 'form-control form-control-sm',
+      textarea: 'form-control form-control-sm',
+      ...options.classNamesMap,
+    };
+
     this._options = {
       rowId,
       dataSrc,
@@ -223,6 +238,7 @@ export default class Editable<
       deleteDataSrc,
       postDataSrc,
       iconSrc,
+      classNamesMap,
       onInputInvalid: options.onInputInvalid,
       onInputValid: options.onInputValid,
     };
@@ -309,7 +325,7 @@ export default class Editable<
           disabled: false,
         };
 
-      const editorManager = new EditorManager(editorOptions);
+      const editorManager = new EditorManager(editorOptions, this.options);
       editors[column.field] = defaultColumns.includes(column.field)
         ? undefined
         : (): HTMLTableCellElement['innerHTML'] =>

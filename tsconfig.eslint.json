@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "types": ["jquery"],
-    "lib": ["DOM", "DOM.Iterable", "ESNext"]
-  }
-}

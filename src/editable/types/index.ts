@@ -1,4 +1,4 @@
-import type { HTTPMethod } from '../../types';
+import type { HTTPMethod } from '@/types';
 import type { Config, ApiRowMethods } from 'datatables.net-bs5';
 
 export type HTTPRequestFormat = 'json' | 'form-data';
@@ -68,6 +68,10 @@ type Icons =
 
 export type IconSrcMap = Map<IconSrc, Record<Icons, HTMLElement['className']>>;
 
+export type ClassNames = 'inp-string' | 'inp-num' | 'inp-email' | 'textarea';
+
+export type ClassNamesMap = Map<ClassNames, HTMLElement['className']>;
+
 /**
  * The options passed to the Editable instance.
  */
@@ -79,6 +83,7 @@ export interface IOptions {
   readonly deleteDataSrc: DeleteDataSrc;
   readonly postDataSrc: PostDataSrc;
   readonly iconSrc?: IconSrc;
+  readonly classNamesMap?: Record<ClassNames, HTMLElement['className']>;
   readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
   readonly onInputInvalid?: <
     TData extends Record<PropertyKey, unknown> | undefined = undefined,

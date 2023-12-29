@@ -161,7 +161,7 @@ export default class EventHandler<
       const editorOptions = column.editorOptions;
 
       if (!editorOptions) return;
-      const editorManager = new EditorManager(editorOptions);
+      const editorManager = new EditorManager(editorOptions, this.editableOptions);
       const field = column.field as keyof TData;
 
       const editor = editorManager.generateEditorHTML(rowData[field] as string);
