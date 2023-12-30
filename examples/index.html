@@ -64,12 +64,15 @@
             method: 'DELETE',
           },
           postDataSrc: 'https://dummyjson.com/users/add',
-          onInputInvalid: function (table, tr, row, el, value, message) {
-            console.log(table, tr, row, el, value, message);
-          },
         });
 
         $('#add-row').click(() => editable.addRow());
+        editable.on('inputInvalid', ({ element, message }) => {
+          console.log(element, message);
+        });
+        editable.on('inputValid', ({ value }) => {
+          console.log(value);
+        });
       });
     </script>
   </body>

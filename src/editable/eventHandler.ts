@@ -231,31 +231,34 @@ export default class EventHandler<
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
       if (!column.submittable) return;
 
-      const el = td.firstElementChild;
-      if (!el || !EditorManager.isHTMLElementWithValue(el)) return;
+      const element = td.firstElementChild;
+      if (!element || !EditorManager.isHTMLElementWithValue(element)) return;
 
       const editorManager = new EditorManager(column);
-      if (!editorManager.checkValidity(el)) {
-        if (this.editableOptions.onInputInvalid)
-          this.editableOptions.onInputInvalid(
-            el.validationMessage,
-            table,
-            tr,
-            row,
-            el,
-            el.value,
-          );
-        else console.error(el, el.validationMessage);
+      if (!editorManager.checkValidity(element)) {
+        this.editable.emit('inputInvalid', {
+          message: element.validationMessage,
+          table,
+          tr,
+          row,
+          element,
+          value: element.value,
+        });
 
-        invalidElements.push(el);
+        invalidElements.push(element);
         return;
       }
 
       const field = column.field as keyof TData;
-      rowData[field] = el.value as TData[typeof field];
+      rowData[field] = element.value as TData[typeof field];
 
-      if (this.editableOptions.onInputValid)
-        this.editableOptions.onInputValid(table, tr, row, el, el.value);
+      this.editable.emit('inputValid', {
+        table,
+        tr,
+        row,
+        element,
+        value: element.value,
+      });
     });
 
     if (invalidElements.length !== 0) return;
@@ -332,30 +335,33 @@ export default class EventHandler<
       const field = column.field as keyof TData;
       if (defaultColumns.includes(field as ColumnField)) return;
 
-      const el = td.firstElementChild;
-      if (!el || !EditorManager.isHTMLElementWithValue(el)) return;
+      const element = td.firstElementChild;
+      if (!element || !EditorManager.isHTMLElementWithValue(element)) return;
 
       const editorManager = new EditorManager(column);
 
-      if (!editorManager.checkValidity(el)) {
-        if (this.editableOptions.onInputInvalid)
-          this.editableOptions.onInputInvalid(
-            el.validationMessage,
-            table,
-            tr,
-            row,
-            el,
-            el.value,
-          );
-        else console.error(el, el.validationMessage);
+      if (!editorManager.checkValidity(element)) {
+        this.editable.emit('inputInvalid', {
+          message: element.validationMessage,
+          table,
+          tr,
+          row,
+          element,
+          value: element.value,
+        });
 
-        invalidElements.push(el);
+        invalidElements.push(element);
         return;
-      } else {
-        rowData[field] = el.value as TData[typeof field];
-        if (this.editableOptions.onInputValid)
-          this.editableOptions.onInputValid(table, tr, row, el, el.value);
       }
+
+      rowData[field] = element.value as TData[typeof field];
+      this.editable.emit('inputValid', {
+        table,
+        tr,
+        row,
+        element,
+        value: element.value,
+      });
     });
     if (invalidElements.length !== 0) return;
 
@@ -384,8 +390,6 @@ export default class EventHandler<
       };
 
       row.data(data).draw(false);
-
-      target.removeEventListener('click', () => void this.handleOnSaveNewRowClick(target));
     } catch (err) {
       if (err instanceof ResponseError)
         if (this.editableOptions.onHTTPError) {

@@ -69,6 +69,27 @@ export type ClassNames = 'inp-string' | 'inp-num' | 'inp-email' | 'textarea';
 
 export type ClassNamesMap = Map<ClassNames, HTMLElement['className']>;
 
+export type EditableEvent = 'inputInvalid';
+export interface EditableEventMap<
+  TData extends Record<string, JSONValues> = Record<string, never>,
+> {
+  readonly inputInvalid: {
+    message: HTMLElementWithValue['validationMessage'];
+    table: HTMLTableElement;
+    tr: HTMLTableRowElement;
+    row: ApiRowMethods<TData>;
+    element: HTMLElementWithValue;
+    value: HTMLElementWithValue['value'];
+  };
+  readonly inputValid: {
+    table: HTMLTableElement;
+    tr: HTMLTableRowElement;
+    row: ApiRowMethods<TData>;
+    element: HTMLElementWithValue;
+    value: HTMLElementWithValue['value'];
+  };
+}
+
 /**
  * The options passed to the Editable instance.
  */
@@ -84,21 +105,6 @@ export interface IOptions {
   readonly iconSrcMap?: Record<IconSrc, Record<Icons, HTMLElement['className']>>;
   readonly classNamesMap?: Record<ClassNames, HTMLElement['className']>;
   readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
-  readonly onInputInvalid?: <TData extends Record<string, JSONValues> = Record<string, never>>(
-    message: HTMLElementWithValue['validationMessage'],
-    table: HTMLTableElement,
-    tr: HTMLTableRowElement,
-    row: ApiRowMethods<TData>,
-    element: HTMLElementWithValue,
-    value: HTMLElementWithValue['value'],
-  ) => void;
-  readonly onInputValid?: <TData extends Record<string, JSONValues> = Record<string, never>>(
-    table: HTMLTableElement,
-    tr: HTMLTableRowElement,
-    row: ApiRowMethods<TData>,
-    element: HTMLElementWithValue,
-    value: HTMLElementWithValue['value'],
-  ) => void;
   readonly onUpdated?: <TData extends Record<string, JSONValues> = Record<string, never>>(
     table: HTMLTableElement,
     tr: HTMLTableRowElement,

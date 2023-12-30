@@ -16,6 +16,7 @@ import type {
   Icons,
   ClassNames,
   ClassNamesMap,
+  EditableEventMap,
 } from './types';
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
@@ -31,7 +32,7 @@ import FieldManager from '../column/fieldManager';
  */
 export default class Editable<
   TData extends Record<string, JSONValues> = Record<string, never>,
-> {
+> extends EventTarget {
   /** The HTML Table Element. */
   private readonly _table: HTMLTableElement;
 
@@ -55,6 +56,7 @@ export default class Editable<
    * @param options - The options passed by the user.
    */
   public constructor(table: HTMLTableElement, options: IOptions) {
+    super();
     this._table = table;
 
     this.options = options;
@@ -345,8 +347,6 @@ export default class Editable<
       iconSrcMap,
       classNamesMap,
       editable,
-      onInputInvalid: options.onInputInvalid,
-      onInputValid: options.onInputValid,
       onUpdated: options.onUpdated,
     };
   }
@@ -483,6 +483,24 @@ export default class Editable<
     } else {
       currentPageRows.insertAdjacentElement('beforebegin', newRowNode);
     }
+  }
+
+  public emit<K extends keyof EditableEventMap<TData>>(
+    type: K,
+    args: EditableEventMap<TData>[K],
+  ): boolean {
+    return super.dispatchEvent(
+      new CustomEvent<EditableEventMap<TData>[K]>(type, { detail: args }),
+    );
+  }
+
+  public on<K extends keyof EditableEventMap<TData>>(
+    type: K,
+    cb: (...args: Parameters<(detail: EditableEventMap<TData>[K]) => void>) => void,
+  ): void {
+    super.addEventListener(type, (evt) => {
+      if (evt instanceof CustomEvent) cb(...[evt.detail as EditableEventMap<TData>[K]]);
+    });
   }
 
   private registerEvents(): void {
