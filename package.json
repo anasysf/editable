@@ -7,9 +7,11 @@
     "lint": "eslint --ext .ts,.js src/",
     "lint:fix": "eslint --ext .ts,.js src/ --fix",
     "format": "prettier . --write",
-    "build": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs && webpack --config webpack.prod.cjs",
+    "build": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs && webpack --config webpack.prod.cjs && webpack --config webpack.prod-jquery.cjs && webpack --config webpack.dev-jquery.cjs",
     "build:prod": "pnpm format && pnpm lint:fix && webpack --config webpack.prod.cjs",
+    "build:prod-jquery": "pnpm format && pnpm lint:fix && webpack --config webpack.prod-jquery.cjs",
     "build:dev": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs",
+    "build:dev-jquery": "pnpm format && pnpm lint:fix && webpack --config webpack.dev-jquery.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

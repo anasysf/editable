@@ -7,13 +7,6 @@ module.exports = {
   module: {
     rules: [
       {
-        test: require.resolve('jquery'),
-        loader: 'expose-loader',
-        options: {
-          exposes: ['$', 'jQuery'],
-        },
-      },
-      {
         test: /\.ts?$/,
         use: {
           loader: 'ts-loader',

@@ -7,6 +7,7 @@ import type {
   HTTPRequestFormat,
   Options,
   IconSrc,
+  ClassNamesMap,
 } from './types';
 import type { Api } from 'datatables.net-bs5';
 import EditorManager from '../column/editorManager';
@@ -83,6 +84,18 @@ export default class EventHandler<
 
   private get iconSrc(): IconSrc {
     return this.editable.iconSrc;
+  }
+
+  private get classNamesMap(): ClassNamesMap {
+    return this.editable.classNamesMap;
+  }
+
+  private get inpInvalidClass(): HTMLElement['className'] {
+    return this.classNamesMap.get('inp-invalid') ?? 'is-invalid';
+  }
+
+  private get inpValidClass(): HTMLElement['className'] {
+    return this.classNamesMap.get('inp-valid') ?? 'is-valid';
   }
 
   public handleByName(evt: MouseEvent): void {
@@ -213,7 +226,13 @@ export default class EventHandler<
     const row = this.dataTable.row(tr);
     const rowData = row.data();
 
+    const table = this.dataTable.table().node() as HTMLTableElement;
+
+    this.editable.emit('beforeCancel', { table, tr, row, rowData });
+
     row.data(rowData).draw(false);
+
+    this.editable.emit('afterCanceled', { table, tr, row, rowData });
   }
 
   private async handleOnSaveEditRowClick(target: HTMLElement): Promise<void> {
@@ -244,6 +263,8 @@ export default class EventHandler<
           element,
           value: element.value,
         });
+        element.classList.remove(this.inpValidClass);
+        element.classList.toggle(this.inpInvalidClass, true);
 
         invalidElements.push(element);
         return;
@@ -259,6 +280,8 @@ export default class EventHandler<
         element,
         value: element.value,
       });
+      element.classList.remove(this.inpInvalidClass);
+      element.classList.toggle(this.inpValidClass, true);
     });
 
     if (invalidElements.length !== 0) return;
@@ -272,14 +295,16 @@ export default class EventHandler<
       );
 
       row.data(rowData).draw(false);
-      if (this.editableOptions.onUpdated)
-        this.editableOptions.onUpdated(table, tr, row, rowData, oldRowData);
+      this.editable.emit('afterUpdated', { table, tr, row, rowData, oldRowData });
     } catch (err) {
-      if (err instanceof ResponseError)
-        if (this.editableOptions.onHTTPError) {
-          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
-          return;
-        }
+      if (err instanceof ResponseError) {
+        this.editable.emit('httpError', {
+          status: err.status,
+          statusText: err.statusText,
+          url: err.url,
+        });
+        return;
+      }
 
       throw err;
     }
@@ -304,11 +329,14 @@ export default class EventHandler<
 
       row.remove().draw(false);
     } catch (err) {
-      if (err instanceof ResponseError)
-        if (this.editableOptions.onHTTPError) {
-          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
-          return;
-        }
+      if (err instanceof ResponseError) {
+        this.editable.emit('httpError', {
+          status: err.status,
+          statusText: err.statusText,
+          url: err.url,
+        });
+        return;
+      }
 
       throw err;
     }
@@ -326,6 +354,7 @@ export default class EventHandler<
 
     const http = new HTTP(this.postDataSrcURL);
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
+
     const invalidElements: HTMLElement[] = [];
     tds.forEach((td, idx) => {
       const column = this.columns.get(idx);
@@ -349,12 +378,15 @@ export default class EventHandler<
           element,
           value: element.value,
         });
+        element.classList.remove(this.inpValidClass);
+        element.classList.toggle(this.inpInvalidClass, true);
 
         invalidElements.push(element);
         return;
       }
 
       rowData[field] = element.value as TData[typeof field];
+
       this.editable.emit('inputValid', {
         table,
         tr,
@@ -362,7 +394,10 @@ export default class EventHandler<
         element,
         value: element.value,
       });
+      element.classList.remove(this.inpInvalidClass);
+      element.classList.toggle(this.inpValidClass, true);
     });
+
     if (invalidElements.length !== 0) return;
 
     try {
@@ -391,13 +426,19 @@ export default class EventHandler<
 
       row.data(data).draw(false);
     } catch (err) {
-      if (err instanceof ResponseError)
-        if (this.editableOptions.onHTTPError) {
-          this.editableOptions.onHTTPError(err.status, err.statusText, err.url);
-          return;
-        }
+      if (err instanceof ResponseError) {
+        this.editable.emit('httpError', {
+          status: err.status,
+          statusText: err.statusText,
+          url: err.url,
+        });
+        return;
+      }
 
-      throw err;
+      this.editable.emit('error', {
+        message: (err as Error).message,
+      });
+      return;
     }
   }
 

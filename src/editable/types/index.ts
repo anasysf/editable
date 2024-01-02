@@ -65,29 +65,74 @@ export type Icons =
 
 export type IconSrcMap = Map<IconSrc, Record<Icons, HTMLElement['className']>>;
 
-export type ClassNames = 'inp-string' | 'inp-num' | 'inp-email' | 'textarea';
-
+export type ClassNames =
+  | 'inp-string'
+  | 'inp-num'
+  | 'inp-email'
+  | 'textarea'
+  | 'inp-valid'
+  | 'inp-invalid';
 export type ClassNamesMap = Map<ClassNames, HTMLElement['className']>;
 
-export type EditableEvent = 'inputInvalid';
+interface InputInvalid<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly message: HTMLElementWithValue['validationMessage'];
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly element: HTMLElementWithValue;
+  readonly value: HTMLElementWithValue['value'];
+}
+
+interface InputValid<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly element: HTMLElementWithValue;
+  readonly value: HTMLElementWithValue['value'];
+}
+
+interface HTTPError {
+  readonly status: number;
+  readonly statusText: string;
+  readonly url: string;
+}
+
+interface Error {
+  readonly message: string;
+}
+
+interface AfterUpdated<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+  readonly oldRowData: TData;
+}
+
+interface BeforeCancel<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface AfterCanceled<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
 export interface EditableEventMap<
   TData extends Record<string, JSONValues> = Record<string, never>,
 > {
-  readonly inputInvalid: {
-    message: HTMLElementWithValue['validationMessage'];
-    table: HTMLTableElement;
-    tr: HTMLTableRowElement;
-    row: ApiRowMethods<TData>;
-    element: HTMLElementWithValue;
-    value: HTMLElementWithValue['value'];
-  };
-  readonly inputValid: {
-    table: HTMLTableElement;
-    tr: HTMLTableRowElement;
-    row: ApiRowMethods<TData>;
-    element: HTMLElementWithValue;
-    value: HTMLElementWithValue['value'];
-  };
+  readonly inputValid: InputValid<TData>;
+  readonly inputInvalid: InputInvalid<TData>;
+  readonly httpError: HTTPError;
+  readonly error: Error;
+  readonly afterUpdated: AfterUpdated<TData>;
+  readonly beforeCancel: BeforeCancel<TData>;
+  readonly afterCanceled: AfterCanceled<TData>;
 }
 
 /**
@@ -104,14 +149,6 @@ export interface IOptions {
   readonly iconSrc?: IconSrc;
   readonly iconSrcMap?: Record<IconSrc, Record<Icons, HTMLElement['className']>>;
   readonly classNamesMap?: Record<ClassNames, HTMLElement['className']>;
-  readonly onHTTPError?: (status: number, statusText: string, url: string) => void;
-  readonly onUpdated?: <TData extends Record<string, JSONValues> = Record<string, never>>(
-    table: HTMLTableElement,
-    tr: HTMLTableRowElement,
-    row: ApiRowMethods<TData>,
-    rowData: TData,
-    oldRowData: TData,
-  ) => void;
 }
 
 export type Options = Omit<Config, 'ajax' | 'columns'> &

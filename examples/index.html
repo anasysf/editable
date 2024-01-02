@@ -44,7 +44,7 @@
     </table>
     <button id="add-row" class="btn btn-primary">ADD ROW</button>
 
-    <script src="../dist/dev/editable.bundle.js"></script>
+    <script src="../dist/dev-jquery/editable.bundle.js"></script>
 
     <script defer>
       $(function () {
@@ -67,11 +67,29 @@
         });
 
         $('#add-row').click(() => editable.addRow());
+
         editable.on('inputInvalid', ({ element, message }) => {
-          console.log(element, message);
+          console.error(element, message);
         });
+
         editable.on('inputValid', ({ value }) => {
           console.log(value);
+        });
+
+        editable.on('httpError', ({ statusText }) => {
+          console.error(statusText);
+        });
+
+        editable.on('error', ({ message }) => {
+          console.error(message);
+        });
+
+        editable.on('beforeCancel', ({ table }) => {
+          console.info(table);
+        });
+
+        editable.on('afterCanceled', ({ table }) => {
+          console.info(table);
         });
       });
     </script>

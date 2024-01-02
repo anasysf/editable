@@ -332,6 +332,8 @@ export default class Editable<
       'inp-num': 'form-control form-control-sm',
       'inp-email': 'form-control form-control-sm',
       textarea: 'form-control form-control-sm',
+      'inp-valid': 'is-valid',
+      'inp-invalid': 'is-invalid',
       ...options.classNamesMap,
     };
 
@@ -347,7 +349,6 @@ export default class Editable<
       iconSrcMap,
       classNamesMap,
       editable,
-      onUpdated: options.onUpdated,
     };
   }
 
