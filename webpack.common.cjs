@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+
 /** @type {import('webpack').Configuration} */
 module.exports = {
   entry: './src/index.ts',
@@ -22,7 +24,8 @@ module.exports = {
   resolve: {
     extensions: ['.ts'],
     alias: {
-      '@': './src',
+      '@': path.resolve(__dirname, 'src'),
+      '@utils': path.resolve(__dirname, 'src', 'lib', 'utils'),
     },
   },
 };

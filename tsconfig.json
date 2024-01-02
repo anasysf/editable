@@ -28,7 +28,9 @@
     // "inlineSourceMap": true /* Include sourcemap files inside the emitted JavaScript. */,
     "outDir": "./dist" /* Specify an output folder for all emitted files. */,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@utils/*": ["./src/lib/utils/*"],
+      "@utils": ["./src/lib/utils/index.ts"]
     },
 
     /* Interop Constraints */
