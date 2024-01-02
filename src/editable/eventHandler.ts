@@ -1,5 +1,5 @@
-import type Column from '../column';
-import type { JSONValues } from '../types';
+import type Column from '@/column';
+import type { JSONValues } from '@/types';
 import type {
   DeleteDataSrcHTTPMethod,
   UpdateDataSrcHTTPMethod,
@@ -8,14 +8,22 @@ import type {
   Options,
   IconSrc,
   ClassNamesMap,
+  Res,
 } from './types';
 import type { Api } from 'datatables.net-bs5';
-import EditorManager from '../column/editorManager';
-import type { ColumnField, HTMLElementWithValue } from '../column/types';
-import FieldManager from '../column/fieldManager';
-import HTTP from '../http';
-import ResponseError from '../http/responseError';
-import type Editable from './';
+import EditorManager from '@/column/editorManager';
+import type { ColumnField, HTMLElementWithValue } from '@/column/types';
+import FieldManager from '@/column/fieldManager';
+import HTTP from '@/http';
+import ResponseError from '@/http/responseError';
+import type Editable from '.';
+import {
+  getElementByName,
+  getTrFromTarget,
+  getCellsInTr,
+  getElementNameAttribute,
+  // formatNumber,
+} from '@utils';
 
 export default class EventHandler<
   TData extends Record<string, JSONValues> = Record<string, never>,
@@ -100,11 +108,9 @@ export default class EventHandler<
 
   public handleByName(evt: MouseEvent): void {
     const target = evt.target;
-
     if (!target || !(target instanceof HTMLElement)) return;
 
-    const targetName = target.getAttribute('name');
-    if (!targetName || targetName.trim().length === 0) return;
+    const targetName = getElementNameAttribute(target);
 
     switch (targetName) {
       case 'edit-row-icon': {
@@ -136,44 +142,25 @@ export default class EventHandler<
     }
   }
 
-  private getTrFromTarget(target: HTMLElement): HTMLTableRowElement {
-    if (!(target instanceof HTMLTableRowElement)) {
-      const tr = target.closest('tr');
-      if (!tr)
-        throw new ReferenceError('Could not find the closest <tr> element to the target.');
+  /* public handleInputByName(evt: Event): void {
+    const target = evt.target;
+    if (!target || !(target instanceof HTMLInputElement)) return;
 
-      return tr;
+    const targetName = getElementNameAttribute(target);
+
+    switch (targetName) {
+      case 'inp-money': {
+        this.handleOnInputMoney(target);
+        break;
+      }
+      case 'inp-money-3': {
+        this.handleOnInputMoney3(target);
+        break;
+      }
+      default:
+        break;
     }
-
-    return target;
-  }
-
-  private getElementByName<T extends HTMLElement = HTMLElement>(
-    source: HTMLElement,
-    name: string,
-  ): T {
-    const element = source.querySelector<T>(`[name="${name}"]`);
-    if (!element)
-      throw new ReferenceError(`Could not find an element with the name: ${name}.`);
-
-    return element;
-  }
-
-  private getTrIndex(tr: HTMLTableRowElement): number {
-    return tr.rowIndex === -1 ? tr.rowIndex : tr.rowIndex - 1;
-  }
-
-  private getCellsInTr(tr: HTMLTableRowElement): HTMLTableCellElement[] {
-    const tds = tr.cells;
-    if (tds.length === 0)
-      throw new RangeError(
-        `Could not find a single <td> on this <tr> element. row-index: ${this.getTrIndex(
-          tr,
-        )}.`,
-      );
-
-    return Array.from(tds);
-  }
+  } */
 
   private handleOnEditRowClick(target: HTMLElement): void {
     if (!this.editable.isEditable)
@@ -182,12 +169,13 @@ export default class EventHandler<
       );
 
     const hasEditor = this.columnsValues.some((column) => column.isEditable);
-    if (!hasEditor) return;
+    if (!hasEditor)
+      throw new ReferenceError('Not a single column has an `editor` object property.');
 
-    const tr = this.getTrFromTarget(target);
-    const tds = this.getCellsInTr(tr);
+    const tr = getTrFromTarget(target);
+    const tds = getCellsInTr(tr);
 
-    const deleteBtn = this.getElementByName(tr, 'delete-row-icon');
+    const deleteBtn = getElementByName(tr, 'delete-row-icon');
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
@@ -218,10 +206,14 @@ export default class EventHandler<
 
     const deleteIcon = iconSrcMap['cancel-row-edit'];
     FieldManager.toggleIcon(deleteBtn, 'cancel-row-edit', 'Annuler', rowIdx, deleteIcon);
+
+    const table = this.dataTable.table().node() as HTMLTableElement;
+
+    this.editable.emit('beforeEdit', { table, tr, row, rowData });
   }
 
   private handleOnCancelEditRowClick(target: HTMLElement): void {
-    const tr = this.getTrFromTarget(target);
+    const tr = getTrFromTarget(target);
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
@@ -232,12 +224,12 @@ export default class EventHandler<
 
     row.data(rowData).draw(false);
 
-    this.editable.emit('afterCanceled', { table, tr, row, rowData });
+    this.editable.emit('afterCancel', { table, tr, row, rowData });
   }
 
   private async handleOnSaveEditRowClick(target: HTMLElement): Promise<void> {
-    const tr = this.getTrFromTarget(target);
-    const tds = this.getCellsInTr(tr);
+    const tr = getTrFromTarget(target);
+    const tds = getCellsInTr(tr);
 
     const table = this.dataTable.table().node() as HTMLTableElement;
     const row = this.dataTable.row(tr);
@@ -286,6 +278,8 @@ export default class EventHandler<
 
     if (invalidElements.length !== 0) return;
 
+    this.editable.emit('afterEdit', { table, tr, row, rowData, oldRowData });
+
     const http = new HTTP(this.updateDataSrcURL);
     try {
       await http.send(
@@ -295,7 +289,7 @@ export default class EventHandler<
       );
 
       row.data(rowData).draw(false);
-      this.editable.emit('afterUpdated', { table, tr, row, rowData, oldRowData });
+      this.editable.emit('afterUpdate', { table, tr, row, rowData, oldRowData });
     } catch (err) {
       if (err instanceof ResponseError) {
         this.editable.emit('httpError', {
@@ -306,18 +300,24 @@ export default class EventHandler<
         return;
       }
 
-      throw err;
+      this.editable.emit('error', {
+        message: (err as Error).message,
+      });
+      return;
     }
   }
 
   private async handleOnDeleteRowClick(target: HTMLElement): Promise<void> {
-    const tr = this.getTrFromTarget(target);
+    const tr = getTrFromTarget(target);
     const row = this.dataTable.row(tr);
+    const rowData = row.data();
 
     const rowIdKey = this.editableOptions.rowId;
     const formData = {
       [rowIdKey]: row.id(),
     };
+
+    this.editable.emit('beforeDelete', { tr, row, rowData });
 
     const http = new HTTP(this.deleteDataSrcURL);
     try {
@@ -328,6 +328,7 @@ export default class EventHandler<
       );
 
       row.remove().draw(false);
+      this.editable.emit('afterDelete', { tr, row, rowData });
     } catch (err) {
       if (err instanceof ResponseError) {
         this.editable.emit('httpError', {
@@ -338,19 +339,24 @@ export default class EventHandler<
         return;
       }
 
-      throw err;
+      this.editable.emit('error', {
+        message: (err as Error).message,
+      });
+      return;
     }
   }
 
   private async handleOnSaveNewRowClick(target: HTMLElement): Promise<void> {
-    const tr = this.getTrFromTarget(target);
-    const tds = this.getCellsInTr(tr);
+    const tr = getTrFromTarget(target);
+    const tds = getCellsInTr(tr);
 
     const rowIdKey = this.editableOptions.rowId;
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
     const table = this.dataTable.table().node() as HTMLTableElement;
+
+    this.editable.emit('beforeNewRowSave', { tr, row, rowData });
 
     const http = new HTTP(this.postDataSrcURL);
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
@@ -401,12 +407,6 @@ export default class EventHandler<
     if (invalidElements.length !== 0) return;
 
     try {
-      interface Res {
-        readonly content: {
-          readonly result: string | number;
-        };
-      }
-
       const resData = (await http.send(
         { method: this.postDataSrcMethod as string },
         this.postDataSrcFormat,
@@ -425,6 +425,8 @@ export default class EventHandler<
       };
 
       row.data(data).draw(false);
+
+      this.editable.emit('afterNewRowSave', { tr, row, rowData });
     } catch (err) {
       if (err instanceof ResponseError) {
         this.editable.emit('httpError', {
@@ -448,4 +450,14 @@ export default class EventHandler<
 
     this.dataTable.row(tr).remove().draw(false);
   }
+
+  /*
+  private handleOnInputMoney(target: HTMLInputElement): void {
+    target.value = formatNumber(target.value, 2, '.', ' ');
+  }
+
+  private handleOnInputMoney3(target: HTMLInputElement): void {
+    target.value = formatNumber(target.value, 3, '.', ' ');
+  }
+  */
 }

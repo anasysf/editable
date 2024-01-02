@@ -101,7 +101,7 @@ interface Error {
   readonly message: string;
 }
 
-interface AfterUpdated<TData extends Record<string, JSONValues> = Record<string, never>> {
+interface AfterUpdate<TData extends Record<string, JSONValues> = Record<string, never>> {
   readonly table: HTMLTableElement;
   readonly tr: HTMLTableRowElement;
   readonly row: ApiRowMethods<TData>;
@@ -116,8 +116,47 @@ interface BeforeCancel<TData extends Record<string, JSONValues> = Record<string,
   readonly rowData: TData;
 }
 
-interface AfterCanceled<TData extends Record<string, JSONValues> = Record<string, never>> {
+interface AfterCancel<TData extends Record<string, JSONValues> = Record<string, never>> {
   readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface BeforeEdit<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface AfterEdit<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly table: HTMLTableElement;
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+  readonly oldRowData: TData;
+}
+
+interface BeforeDelete<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface AfterDelete<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface BeforeNewRowSave<TData extends Record<string, JSONValues> = Record<string, never>> {
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
+interface AfterNewRowSave<TData extends Record<string, JSONValues> = Record<string, never>> {
   readonly tr: HTMLTableRowElement;
   readonly row: ApiRowMethods<TData>;
   readonly rowData: TData;
@@ -130,9 +169,15 @@ export interface EditableEventMap<
   readonly inputInvalid: InputInvalid<TData>;
   readonly httpError: HTTPError;
   readonly error: Error;
-  readonly afterUpdated: AfterUpdated<TData>;
+  readonly afterUpdate: AfterUpdate<TData>;
   readonly beforeCancel: BeforeCancel<TData>;
-  readonly afterCanceled: AfterCanceled<TData>;
+  readonly afterCancel: AfterCancel<TData>;
+  readonly beforeEdit: BeforeEdit<TData>;
+  readonly afterEdit: AfterEdit<TData>;
+  readonly beforeDelete: BeforeDelete<TData>;
+  readonly afterDelete: AfterDelete<TData>;
+  readonly beforeNewRowSave: BeforeNewRowSave<TData>;
+  readonly afterNewRowSave: AfterNewRowSave<TData>;
 }
 
 /**
@@ -154,3 +199,9 @@ export interface IOptions {
 export type Options = Omit<Config, 'ajax' | 'columns'> &
   Required<Pick<IOptions, 'classNamesMap' | 'editable' | 'iconSrc' | 'iconSrcMap'>> &
   IOptions;
+
+export interface Res {
+  readonly content: {
+    readonly result: string | number;
+  };
+}

@@ -20,11 +20,11 @@ import type {
 } from './types';
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
-import Column from '../column';
+import Column from '@/column';
 import type { ColumnField } from '@/column/types';
 import EventHandler from './eventHandler';
-import EditorManager from '../column/editorManager';
-import FieldManager from '../column/fieldManager';
+import EditorManager from '@/column/editorManager';
+import FieldManager from '@/column/fieldManager';
 
 /**
  * Class representing an Editable instance.
@@ -421,6 +421,7 @@ export default class Editable<
     if (saveNewRowTr) return;
 
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
+    // const formattedColumns: ColumnType[] = ['money', 'money-3'] as const;
     const editors: Record<string, (() => HTMLElement['outerHTML']) | undefined> = {};
 
     for (const column of Array.from(this.columns.values())) {
@@ -434,10 +435,10 @@ export default class Editable<
         };
 
       const editorManager = new EditorManager(column);
-      editors[column.field] = defaultColumns.includes(column.field)
-        ? undefined
-        : (): HTMLTableCellElement['innerHTML'] =>
-            editorManager.generateEditorHTML('').outerHTML;
+      if (defaultColumns.includes(column.field)) editors[column.field] = undefined;
+      else
+        editors[column.field] = (): HTMLTableCellElement['innerHTML'] =>
+          editorManager.generateEditorHTML().outerHTML;
     }
 
     const currentPageRows = (
@@ -498,10 +499,12 @@ export default class Editable<
   public on<K extends keyof EditableEventMap<TData>>(
     type: K,
     cb: (...args: Parameters<(detail: EditableEventMap<TData>[K]) => void>) => void,
-  ): void {
+  ): this {
     super.addEventListener(type, (evt) => {
       if (evt instanceof CustomEvent) cb(...[evt.detail as EditableEventMap<TData>[K]]);
     });
+
+    return this;
   }
 
   private registerEvents(): void {
@@ -513,5 +516,11 @@ export default class Editable<
     this.tbody.addEventListener('click', (evt) => {
       this.eventHandler.handleByName(evt);
     });
+
+    /*
+      this.tbody.addEventListener('input', (evt) => {
+        this.eventHandler.handleInputByName(evt);
+      });
+    */
   }
 }

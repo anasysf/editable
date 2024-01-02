@@ -1,9 +1,11 @@
 import type { ColumnType, ColumnField, IDataOptions, IEditor } from './types';
-import type Editable from '../editable';
-import type { Options, IconSrc } from '../editable/types';
+import type Editable from '@/editable';
+import type { Options, IconSrc } from '@/editable/types';
 import type { ConfigColumns } from 'datatables.net-bs5';
-import type { JSONValues } from '../types';
+import type { JSONValues } from '@/types';
 import FieldManager from './fieldManager';
+import EditorManager from './editorManager';
+import { formatNumber } from '@utils';
 
 export default class Column<TData extends Record<string, JSONValues> = Record<string, never>> {
   private _dataOptions!: IDataOptions;
@@ -26,7 +28,7 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
     return this.dataOptions.field;
   }
 
-  private get type(): ColumnType | undefined {
+  public get type(): ColumnType | undefined {
     return this.dataOptions.type;
   }
 
@@ -104,6 +106,9 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
           orderable: false,
         };
       case 'edit':
+        if (!this.editable.isEditable)
+          throw new SyntaxError("Can't have an `edit` column on a non-editable <table>.");
+
         return {
           data: null,
           render: (_data, _type, _row, { row }): HTMLSpanElement['outerHTML'] => {
@@ -124,6 +129,25 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
           orderable: false,
         };
       default:
+        if (this.type === 'money' || this.type === 'money-3')
+          return {
+            data: this.field,
+            render: (data): HTMLTableCellElement['innerHTML'] => {
+              if (data instanceof Function) {
+                const editorManager = new EditorManager(this);
+                const editor = editorManager.generateEditorHTML(
+                  formatNumber(0, this.type === 'money' ? 2 : 3, '.', ' '),
+                ) as HTMLInputElement;
+
+                return editor.outerHTML;
+              }
+
+              return formatNumber(data, this.type === 'money' ? 2 : 3, '.', ' ');
+            },
+            type: 'num',
+            orderable: true,
+          };
+
         return {
           data: this.field,
           type: this.type,

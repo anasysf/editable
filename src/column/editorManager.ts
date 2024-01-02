@@ -1,7 +1,8 @@
-import type Column from './';
+import type Column from '.';
 import type { IEditor, HTMLElementWithValue } from './types';
 import type { ClassNamesMap } from '@/editable/types';
-import type { JSONValues } from '../types';
+import type { JSONValues } from '@/types';
+import { formatNumber } from '@utils';
 
 export default class EditorManager<
   TData extends Record<string, JSONValues> = Record<string, never>,
@@ -24,7 +25,10 @@ export default class EditorManager<
     return (
       this.column.editorOptions ??
       ({
-        type: 'string',
+        type:
+          this.column.type === 'money' || this.column.type === 'money-3'
+            ? this.column.type
+            : 'string',
         required: true,
         disabled: false,
       } as const)
@@ -41,6 +45,10 @@ export default class EditorManager<
         return this.generateTextInputHTML(String(defaultValue ?? ''));
       case 'number':
         return this.generateNumberInputHTML(Number(defaultValue ?? 0));
+      case 'money':
+        return this.generateMoneyInputHTML(Number(defaultValue ?? 0));
+      case 'money-3':
+        return this.generateMoney3InputHTML(Number(defaultValue ?? 0));
       case 'email':
         return this.generateEmailInputHTML(String(defaultValue ?? ''));
       default:
@@ -126,6 +134,48 @@ export default class EditorManager<
     input.type = 'email';
     input.placeholder = this.column.field;
     input.value = defaultValue;
+    input.required = this.editorOptions.required ?? true;
+    input.disabled = this.editorOptions.disabled ?? false;
+    input.readOnly = this.editorOptions.disabled ?? false;
+    this.editorOptions.pattern ? (input.pattern = this.editorOptions.pattern) : undefined;
+
+    return fragment.appendChild(input);
+  }
+
+  private generateMoneyInputHTML(
+    defaultValue: HTMLInputElement['valueAsNumber'] = 0,
+  ): HTMLInputElement {
+    const fragment = document.createDocumentFragment();
+    const className = this.classNamesMap.get('inp-num') ?? 'form-control form-control-sm';
+
+    const input = document.createElement('input');
+    input.setAttribute('name', 'inp-money');
+    input.className = className;
+    input.type = 'number';
+    input.placeholder = this.column.field;
+    input.value = formatNumber(defaultValue, 2, '.', ' ');
+    input.step = this.editorOptions.step ?? '0.01';
+    input.required = this.editorOptions.required ?? true;
+    input.disabled = this.editorOptions.disabled ?? false;
+    input.readOnly = this.editorOptions.disabled ?? false;
+    this.editorOptions.pattern ? (input.pattern = this.editorOptions.pattern) : undefined;
+
+    return fragment.appendChild(input);
+  }
+
+  private generateMoney3InputHTML(
+    defaultValue: HTMLInputElement['valueAsNumber'] = 0,
+  ): HTMLInputElement {
+    const fragment = document.createDocumentFragment();
+    const className = this.classNamesMap.get('inp-num') ?? 'form-control form-control-sm';
+
+    const input = document.createElement('input');
+    input.setAttribute('name', 'inp-money-3');
+    input.className = className;
+    input.type = 'number';
+    input.placeholder = this.column.field;
+    input.value = formatNumber(defaultValue, 3, '.', ' ');
+    input.step = this.editorOptions.step ?? '0.001';
     input.required = this.editorOptions.required ?? true;
     input.disabled = this.editorOptions.disabled ?? false;
     input.readOnly = this.editorOptions.disabled ?? false;

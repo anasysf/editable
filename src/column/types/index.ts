@@ -1,7 +1,7 @@
-export type ColumnType = 'date' | 'num' | 'num-fmt' | 'html' | 'string';
+export type ColumnType = 'date' | 'num' | 'num-fmt' | 'html' | 'string' | 'money' | 'money-3';
 export type ColumnField = 'delete' | 'edit' | 'checkbox';
 
-export type EditorType = 'text' | 'string' | 'number' | 'email';
+export type EditorType = 'text' | 'string' | 'number' | 'email' | 'money' | 'money-3';
 
 export type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -17,4 +17,5 @@ export interface IEditor {
   readonly disabled?: boolean;
   readonly pattern?: string;
   readonly required?: boolean;
+  readonly step?: HTMLInputElement['step'];
 }
