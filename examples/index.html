@@ -21,6 +21,8 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+
+    <title>EDITABLE EXAMPLE DEV</title>
   </head>
 
   <body class="container-fluid mt-4">
@@ -29,6 +31,9 @@
         <col data-options='{ "field": "firstName" }' />
         <col data-options='{ "field": "lastName" }' />
         <col data-options='{ "field": "email", "editor": { "type": "email" } }' />
+        <col
+          data-options='{ "field": "height", "type": "money-3", "editor": { "type": "money-3" } }'
+        />
         <col data-options='{ "field": "edit" }' />
         <col data-options='{ "field": "delete" }' />
       </colgroup>
@@ -37,6 +42,7 @@
           <th scope="col">First Name</th>
           <th scope="col">Last Name</th>
           <th scope="col">Email</th>
+          <th scope="col">Height</th>
           <th scope="col"></th>
           <th scope="col"></th>
         </tr>
@@ -68,29 +74,28 @@
 
         $('#add-row').click(() => editable.addRow());
 
-        editable.on('inputInvalid', ({ element, message }) => {
-          console.error(element, message);
-        });
-
-        editable.on('inputValid', ({ value }) => {
-          console.log(value);
-        });
-
-        editable.on('httpError', ({ statusText }) => {
-          console.error(statusText);
-        });
-
-        editable.on('error', ({ message }) => {
-          console.error(message);
-        });
-
-        editable.on('beforeCancel', ({ table }) => {
-          console.info(table);
-        });
-
-        editable.on('afterCanceled', ({ table }) => {
-          console.info(table);
-        });
+        editable
+          .on('inputInvalid', ({ message, table, tr, row, element, value }) => {
+            console.error(message, table, tr, row, element, value);
+          })
+          .on('inputValid', ({ table, tr, row, element, value }) => {
+            console.info(table, tr, row, element, value);
+          })
+          .on('httpError', ({ status, statusText, url }) => {
+            console.error(status, statusText, url);
+          })
+          .on('error', ({ message }) => {
+            console.error(message);
+          })
+          .on('afterUpdate', ({ table, tr, row, rowData, oldRowData }) => {
+            console.info(table, tr, row, rowData, oldRowData);
+          })
+          .on('beforeCancel', ({ table, tr, row, rowData }) => {
+            console.info(table, tr, row, rowData);
+          })
+          .on('afterCancel', ({ table, tr, row, rowData }) => {
+            console.info(table, tr, row, rowData);
+          });
       });
     </script>
   </body>
