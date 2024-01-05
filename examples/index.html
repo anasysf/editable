@@ -30,9 +30,11 @@
       <colgroup>
         <col data-options='{ "field": "firstName" }' />
         <col data-options='{ "field": "lastName" }' />
-        <col data-options='{ "field": "email", "editor": { "type": "email" } }' />
         <col
-          data-options='{ "field": "height", "type": "money-3", "editor": { "type": "money-3" } }'
+          data-options='{ "field": "email", "editor": { "type": "email", "maxLength": 1 } }'
+        />
+        <col
+          data-options='{ "field": "height", "type": "money-3", "editor": { "type": "money-3", "min": 1, "maxLength": 2 } }'
         />
         <col data-options='{ "field": "edit" }' />
         <col data-options='{ "field": "delete" }' />
@@ -75,26 +77,56 @@
         $('#add-row').click(() => editable.addRow());
 
         editable
-          .on('inputInvalid', ({ message, table, tr, row, element, value }) => {
-            console.error(message, table, tr, row, element, value);
+          .on('input-invalid', ({ message, tr, row, element, value }) => {
+            console.error(message, tr, row, element, value);
+            element.type === 'email'
+              ? (element.type = 'number')
+              : (element.type = element.type);
           })
-          .on('inputValid', ({ table, tr, row, element, value }) => {
-            console.info(table, tr, row, element, value);
+          .on('input-valid', ({ tr, row, element, value }) => {
+            console.info(tr, row, element, value);
           })
-          .on('httpError', ({ status, statusText, url }) => {
+          .on('http-error', ({ status, statusText, url }) => {
             console.error(status, statusText, url);
           })
           .on('error', ({ message }) => {
             console.error(message);
           })
-          .on('afterUpdate', ({ table, tr, row, rowData, oldRowData }) => {
-            console.info(table, tr, row, rowData, oldRowData);
+          .on('edit', ({ tr, row, rowData, elements }) => {
+            console.info(tr, row, rowData, elements);
           })
-          .on('beforeCancel', ({ table, tr, row, rowData }) => {
-            console.info(table, tr, row, rowData);
+          .on('edited', ({ tr, row, rowData, oldRowData }) => {
+            console.info(tr, row, rowData, oldRowData);
           })
-          .on('afterCancel', ({ table, tr, row, rowData }) => {
-            console.info(table, tr, row, rowData);
+          .on('updated', ({ tr, row, rowData, oldRowData }) => {
+            console.info(tr, row, rowData, oldRowData);
+          })
+          .on('delete', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
+          })
+          .on('deleted', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
+          })
+          .on('new-row', ({ tr, row }) => {
+            console.info(tr, row);
+          })
+          .on('new-row-save', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
+          })
+          .on('new-row-saved', ({ tr, row, rowData, response }) => {
+            console.info(tr, row, rowData, response);
+          })
+          .on('new-row-cancel', ({ tr, row }) => {
+            console.info(tr, row);
+          })
+          .on('new-row-cancelled', ({ tr, row }) => {
+            console.info(tr, row);
+          })
+          .on('cancel', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
+          })
+          .on('cancelled', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
           });
       });
     </script>

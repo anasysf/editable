@@ -10,10 +10,10 @@ import type {
   ClassNamesMap,
   Res,
 } from './types';
+import { EditableEvent } from './types/events';
 import type { Api } from 'datatables.net-bs5';
-import EditorManager from '@/column/editorManager';
+import EditorManager from '@/column/editor';
 import type { ColumnField, HTMLElementWithValue } from '@/column/types';
-import FieldManager from '@/column/fieldManager';
 import HTTP from '@/http';
 import ResponseError from '@/http/responseError';
 import type Editable from '.';
@@ -22,11 +22,12 @@ import {
   getTrFromTarget,
   getCellsInTr,
   getElementNameAttribute,
+  toggleIcon,
   // formatNumber,
 } from '@utils';
 
 export default class EventHandler<
-  TData extends Record<string, JSONValues> = Record<string, never>,
+  TData extends Record<string, JSONValues> = Record<string, JSONValues>,
 > {
   private readonly _editable: Editable<TData>;
 
@@ -142,26 +143,15 @@ export default class EventHandler<
     }
   }
 
-  /* public handleInputByName(evt: Event): void {
-    const target = evt.target;
-    if (!target || !(target instanceof HTMLInputElement)) return;
-
-    const targetName = getElementNameAttribute(target);
-
-    switch (targetName) {
-      case 'inp-money': {
-        this.handleOnInputMoney(target);
-        break;
-      }
-      case 'inp-money-3': {
-        this.handleOnInputMoney3(target);
-        break;
-      }
-      default:
-        break;
-    }
-  } */
-
+  /**
+   * Handles the event when the edit icon is clicked.
+   * @param target - The HTML target Element.
+   *
+   * @internal
+   * @throws {SyntaxError} - If the event is fired on a non-editable editable instance.
+   * @throws {ReferenceError} - If no column has the property editor.
+   * @throws {RangeError} - If no column was found with the index.
+   */
   private handleOnEditRowClick(target: HTMLElement): void {
     if (!this.editable.isEditable)
       throw new SyntaxError(
@@ -180,20 +170,26 @@ export default class EventHandler<
     const row = this.dataTable.row(tr);
     const rowData = row.data();
     const rowIdx = row.index();
+    const elements: HTMLElementWithValue[] = [];
 
-    tds.forEach((td, idx) => {
+    for (const [idx, td] of tds.entries()) {
       const column = this.columns.get(idx);
       if (!column) throw new RangeError(`Could not find a column at index: ${idx}.`);
 
       const editorOptions = column.editorOptions;
-      if (!editorOptions) return;
+      if (!editorOptions) continue;
 
       const editorManager = new EditorManager(column);
       const field = column.field as keyof TData;
-      const editor = editorManager.generateEditorHTML(rowData[field] as string | number);
-
-      td.firstChild ? td.replaceChild(editor, td.firstChild) : td.appendChild(editor);
-    });
+      try {
+        const editor = editorManager.generateEditorHTML(rowData[field] as string | number);
+        td.firstChild ? td.replaceChild(editor, td.firstChild) : td.appendChild(editor);
+        elements.push(editor);
+      } catch (err) {
+        this.editable.emit(EditableEvent.ERROR, { message: (err as Error).message });
+        break;
+      }
+    }
 
     const iconSrcMap = this.editable.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
@@ -202,14 +198,12 @@ export default class EventHandler<
       );
 
     const editIcon = iconSrcMap['save-row-edit'];
-    FieldManager.toggleIcon(target, 'save-row-edit', 'Enregistrer', rowIdx, editIcon);
+    toggleIcon(target, 'save-row-edit', 'Enregistrer', rowIdx, editIcon);
 
     const deleteIcon = iconSrcMap['cancel-row-edit'];
-    FieldManager.toggleIcon(deleteBtn, 'cancel-row-edit', 'Annuler', rowIdx, deleteIcon);
+    toggleIcon(deleteBtn, 'cancel-row-edit', 'Annuler', rowIdx, deleteIcon);
 
-    const table = this.dataTable.table().node() as HTMLTableElement;
-
-    this.editable.emit('beforeEdit', { table, tr, row, rowData });
+    this.editable.emit(EditableEvent.EDIT, { tr, row, rowData, elements });
   }
 
   private handleOnCancelEditRowClick(target: HTMLElement): void {
@@ -218,38 +212,34 @@ export default class EventHandler<
     const row = this.dataTable.row(tr);
     const rowData = row.data();
 
-    const table = this.dataTable.table().node() as HTMLTableElement;
-
-    this.editable.emit('beforeCancel', { table, tr, row, rowData });
+    this.editable.emit(EditableEvent.CANCEL, { tr, row, rowData });
 
     row.data(rowData).draw(false);
 
-    this.editable.emit('afterCancel', { table, tr, row, rowData });
+    this.editable.emit(EditableEvent.CANCELLED, { tr, row, rowData });
   }
 
   private async handleOnSaveEditRowClick(target: HTMLElement): Promise<void> {
     const tr = getTrFromTarget(target);
     const tds = getCellsInTr(tr);
 
-    const table = this.dataTable.table().node() as HTMLTableElement;
     const row = this.dataTable.row(tr);
     const rowData = row.data();
     const oldRowData = structuredClone(rowData);
 
     const invalidElements: HTMLElementWithValue[] = [];
-    tds.forEach((td, idx) => {
+    for (const [idx, td] of tds.entries()) {
       const column = this.columns.get(idx);
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
-      if (!column.submittable) return;
+      if (!column.submittable) continue;
 
       const element = td.firstElementChild;
-      if (!element || !EditorManager.isHTMLElementWithValue(element)) return;
+      if (!element || !EditorManager.isHTMLElementWithValue(element)) continue;
 
       const editorManager = new EditorManager(column);
       if (!editorManager.checkValidity(element)) {
-        this.editable.emit('inputInvalid', {
+        this.editable.emit(EditableEvent.INPUT_INVALID, {
           message: element.validationMessage,
-          table,
           tr,
           row,
           element,
@@ -259,14 +249,13 @@ export default class EventHandler<
         element.classList.toggle(this.inpInvalidClass, true);
 
         invalidElements.push(element);
-        return;
+        break;
       }
 
       const field = column.field as keyof TData;
       rowData[field] = element.value as TData[typeof field];
 
-      this.editable.emit('inputValid', {
-        table,
+      this.editable.emit(EditableEvent.INPUT_VALID, {
         tr,
         row,
         element,
@@ -274,25 +263,26 @@ export default class EventHandler<
       });
       element.classList.remove(this.inpInvalidClass);
       element.classList.toggle(this.inpValidClass, true);
-    });
+    }
 
     if (invalidElements.length !== 0) return;
 
-    this.editable.emit('afterEdit', { table, tr, row, rowData, oldRowData });
+    this.editable.emit(EditableEvent.EDITED, { tr, row, rowData, oldRowData });
 
     const http = new HTTP(this.updateDataSrcURL);
     try {
-      await http.send(
+      const response = await http.send(
         { method: this.updateDataSrcMethod as string },
         this.updateDataSrcFormat,
         rowData,
       );
 
       row.data(rowData).draw(false);
-      this.editable.emit('afterUpdate', { table, tr, row, rowData, oldRowData });
+      this.editable.emit(EditableEvent.UPDATED, { tr, row, rowData, oldRowData, response });
+      return;
     } catch (err) {
       if (err instanceof ResponseError) {
-        this.editable.emit('httpError', {
+        this.editable.emit(EditableEvent.HTTP_ERROR, {
           status: err.status,
           statusText: err.statusText,
           url: err.url,
@@ -300,7 +290,7 @@ export default class EventHandler<
         return;
       }
 
-      this.editable.emit('error', {
+      this.editable.emit(EditableEvent.ERROR, {
         message: (err as Error).message,
       });
       return;
@@ -317,7 +307,7 @@ export default class EventHandler<
       [rowIdKey]: row.id(),
     };
 
-    this.editable.emit('beforeDelete', { tr, row, rowData });
+    this.editable.emit(EditableEvent.DELETE, { tr, row, rowData });
 
     const http = new HTTP(this.deleteDataSrcURL);
     try {
@@ -328,10 +318,11 @@ export default class EventHandler<
       );
 
       row.remove().draw(false);
-      this.editable.emit('afterDelete', { tr, row, rowData });
+      this.editable.emit(EditableEvent.DELETED, { tr, row, rowData });
+      return;
     } catch (err) {
       if (err instanceof ResponseError) {
-        this.editable.emit('httpError', {
+        this.editable.emit(EditableEvent.HTTP_ERROR, {
           status: err.status,
           statusText: err.statusText,
           url: err.url,
@@ -339,7 +330,7 @@ export default class EventHandler<
         return;
       }
 
-      this.editable.emit('error', {
+      this.editable.emit(EditableEvent.ERROR, {
         message: (err as Error).message,
       });
       return;
@@ -354,31 +345,29 @@ export default class EventHandler<
 
     const row = this.dataTable.row(tr);
     const rowData = row.data();
-    const table = this.dataTable.table().node() as HTMLTableElement;
-
-    this.editable.emit('beforeNewRowSave', { tr, row, rowData });
 
     const http = new HTTP(this.postDataSrcURL);
     const defaultColumns: ColumnField[] = ['checkbox', 'delete', 'edit'] as const;
-
     const invalidElements: HTMLElement[] = [];
-    tds.forEach((td, idx) => {
+
+    this.editable.emit(EditableEvent.NEW_ROW_SAVE, { tr, row, rowData });
+
+    for (const [idx, td] of tds.entries()) {
       const column = this.columns.get(idx);
       if (!column) throw new ReferenceError(`Could not find a column at index: ${idx}.`);
-      if (!column.submittable) return;
+      if (!column.submittable) continue;
 
       const field = column.field as keyof TData;
-      if (defaultColumns.includes(field as ColumnField)) return;
+      if (defaultColumns.includes(field as ColumnField)) continue;
 
       const element = td.firstElementChild;
-      if (!element || !EditorManager.isHTMLElementWithValue(element)) return;
+      if (!element || !EditorManager.isHTMLElementWithValue(element)) continue;
 
       const editorManager = new EditorManager(column);
 
       if (!editorManager.checkValidity(element)) {
-        this.editable.emit('inputInvalid', {
+        this.editable.emit(EditableEvent.INPUT_INVALID, {
           message: element.validationMessage,
-          table,
           tr,
           row,
           element,
@@ -393,8 +382,7 @@ export default class EventHandler<
 
       rowData[field] = element.value as TData[typeof field];
 
-      this.editable.emit('inputValid', {
-        table,
+      this.editable.emit(EditableEvent.INPUT_VALID, {
         tr,
         row,
         element,
@@ -402,7 +390,7 @@ export default class EventHandler<
       });
       element.classList.remove(this.inpInvalidClass);
       element.classList.toggle(this.inpValidClass, true);
-    });
+    }
 
     if (invalidElements.length !== 0) return;
 
@@ -426,10 +414,11 @@ export default class EventHandler<
 
       row.data(data).draw(false);
 
-      this.editable.emit('afterNewRowSave', { tr, row, rowData });
+      this.editable.emit(EditableEvent.NEW_ROW_SAVED, { tr, row, rowData, response: resData });
+      return;
     } catch (err) {
       if (err instanceof ResponseError) {
-        this.editable.emit('httpError', {
+        this.editable.emit(EditableEvent.HTTP_ERROR, {
           status: err.status,
           statusText: err.statusText,
           url: err.url,
@@ -437,7 +426,7 @@ export default class EventHandler<
         return;
       }
 
-      this.editable.emit('error', {
+      this.editable.emit(EditableEvent.ERROR, {
         message: (err as Error).message,
       });
       return;
@@ -445,19 +434,14 @@ export default class EventHandler<
   }
 
   private handleOnCancelNewRowClick(target: HTMLElement): void {
-    const tr = target.closest('tr');
-    if (!tr) throw new ReferenceError(`Could not find the closest row.`);
+    const tr = getTrFromTarget(target);
+
+    const row = this.dataTable.row(tr);
+
+    this.editable.emit(EditableEvent.NEW_ROW_CANCEL, { tr, row });
 
     this.dataTable.row(tr).remove().draw(false);
-  }
 
-  /*
-  private handleOnInputMoney(target: HTMLInputElement): void {
-    target.value = formatNumber(target.value, 2, '.', ' ');
+    this.editable.emit(EditableEvent.NEW_ROW_CANCELLED, { tr, row });
   }
-
-  private handleOnInputMoney3(target: HTMLInputElement): void {
-    target.value = formatNumber(target.value, 3, '.', ' ');
-  }
-  */
 }

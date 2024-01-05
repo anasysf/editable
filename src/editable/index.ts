@@ -16,23 +16,25 @@ import type {
   Icons,
   ClassNames,
   ClassNamesMap,
-  EditableEventMap,
 } from './types';
+import type { EditableEventsMap } from './types/events';
+import { EditableEvent } from './types/events';
 import type { Config, Api, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
 import Column from '@/column';
 import type { ColumnField } from '@/column/types';
 import EventHandler from './eventHandler';
-import EditorManager from '@/column/editorManager';
-import FieldManager from '@/column/fieldManager';
+import EditorManager from '@/column/editor';
+import EventEmitter from '@utils/eventEmitter';
+import { toggleIcon } from '@utils';
 
 /**
  * Class representing an Editable instance.
  * @internal
  */
 export default class Editable<
-  TData extends Record<string, JSONValues> = Record<string, never>,
-> extends EventTarget {
+  TData extends Record<string, JSONValues> = Record<string, JSONValues>,
+> extends EventEmitter<EditableEventsMap<TData>> {
   /** The HTML Table Element. */
   private readonly _table: HTMLTableElement;
 
@@ -463,48 +465,18 @@ export default class Editable<
     const rowIdx = newRowNode.rowIndex - 1;
 
     const saveRowIcon = iconSrcMap['save-new-row'];
-    FieldManager.toggleIcon(
-      newRowEditIcon,
-      'save-new-row',
-      'Enregistrer',
-      rowIdx,
-      saveRowIcon,
-    );
+    toggleIcon(newRowEditIcon, 'save-new-row', 'Enregistrer', rowIdx, saveRowIcon);
 
     const cancelRowIcon = iconSrcMap['cancel-new-row'];
-    FieldManager.toggleIcon(
-      newRowDeleteIcon,
-      'cancel-new-row',
-      'Annuler',
-      rowIdx,
-      cancelRowIcon,
-    );
+    toggleIcon(newRowDeleteIcon, 'cancel-new-row', 'Annuler', rowIdx, cancelRowIcon);
 
     if (!currentPageRows) {
       newRow.draw(false);
     } else {
       currentPageRows.insertAdjacentElement('beforebegin', newRowNode);
     }
-  }
 
-  public emit<K extends keyof EditableEventMap<TData>>(
-    type: K,
-    args: EditableEventMap<TData>[K],
-  ): boolean {
-    return super.dispatchEvent(
-      new CustomEvent<EditableEventMap<TData>[K]>(type, { detail: args }),
-    );
-  }
-
-  public on<K extends keyof EditableEventMap<TData>>(
-    type: K,
-    cb: (...args: Parameters<(detail: EditableEventMap<TData>[K]) => void>) => void,
-  ): this {
-    super.addEventListener(type, (evt) => {
-      if (evt instanceof CustomEvent) cb(...[evt.detail as EditableEventMap<TData>[K]]);
-    });
-
-    return this;
+    this.emit(EditableEvent.NEW_ROW, { tr: newRowNode, row: newRow });
   }
 
   private registerEvents(): void {
@@ -516,11 +488,5 @@ export default class Editable<
     this.tbody.addEventListener('click', (evt) => {
       this.eventHandler.handleByName(evt);
     });
-
-    /*
-      this.tbody.addEventListener('input', (evt) => {
-        this.eventHandler.handleInputByName(evt);
-      });
-    */
   }
 }

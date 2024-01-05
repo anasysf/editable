@@ -1,11 +1,11 @@
 import type { ColumnType, ColumnField, IDataOptions, IEditor } from './types';
 import type Editable from '@/editable';
-import type { Options, IconSrc } from '@/editable/types';
 import type { ConfigColumns } from 'datatables.net-bs5';
 import type { JSONValues } from '@/types';
 import FieldManager from './fieldManager';
-import EditorManager from './editorManager';
+import EditorManager from './editor';
 import { formatNumber } from '@utils';
+import ResponseError from '@/http/responseError';
 
 export default class Column<TData extends Record<string, JSONValues> = Record<string, never>> {
   private _dataOptions!: IDataOptions;
@@ -32,14 +32,6 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
     return this.dataOptions.type;
   }
 
-  private get editableOptions(): Options {
-    return this.editable.options;
-  }
-
-  private get iconSrc(): IconSrc {
-    return this.editableOptions.iconSrc;
-  }
-
   public get editorOptions(): IEditor | undefined {
     return this.dataOptions.editor;
   }
@@ -50,6 +42,13 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
 
   public get isEditable(): boolean {
     return this.editorOptions !== undefined;
+  }
+
+  public get listDynSrc(): string {
+    if (!this.dataOptions.src || this.dataOptions.src.trim().length === 0)
+      throw new ReferenceError('The `src` field is required.');
+
+    return this.dataOptions.src;
   }
 
   private set dataOptions(dataOptionsStr: DOMStringMap[string]) {
@@ -99,7 +98,7 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
         return {
           data: null,
           render: (_data, _type, _row, { row }): HTMLDivElement['outerHTML'] => {
-            const fieldManager = new FieldManager(this.field, row, this.iconSrc);
+            const fieldManager = new FieldManager(this, this.editable, row);
             return fieldManager.generateCheckboxHTML().outerHTML;
           },
           type: 'html',
@@ -112,7 +111,7 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
         return {
           data: null,
           render: (_data, _type, _row, { row }): HTMLSpanElement['outerHTML'] => {
-            const fieldManager = new FieldManager(this.field, row, this.iconSrc);
+            const fieldManager = new FieldManager(this, this.editable, row);
             return fieldManager.generateEditHTML().outerHTML;
           },
           type: 'html',
@@ -122,7 +121,7 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
         return {
           data: null,
           render: (_data, _type, _row, { row }): HTMLSpanElement['outerHTML'] => {
-            const fieldManager = new FieldManager(this.field, row, this.iconSrc);
+            const fieldManager = new FieldManager(this, this.editable, row);
             return fieldManager.generateDeleteHTML().outerHTML;
           },
           type: 'html',
@@ -146,6 +145,47 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
             },
             type: 'num',
             orderable: true,
+          };
+        else if (this.type === 'list-dyn')
+          return {
+            data: (data, _set, _meta, { row }): void => {
+              const fieldManager = new FieldManager(this, this.editable, row);
+
+              (async (): Promise<void> => {
+                await fieldManager
+                  .getListDynData()
+                  .then((objs) => {
+                    const obj = fieldManager.retrieveListData(objs);
+                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
+                    console.log('pre', data[this.field]);
+                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
+                    data[this.field] = obj[row];
+                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
+                    console.log('post', data[this.field]);
+                  })
+                  .catch((err) => {
+                    if (err instanceof ResponseError) {
+                      this.editable.emit('httpError', {
+                        status: err.status,
+                        statusText: err.statusText,
+                        url: err.url,
+                      });
+                      return;
+                    }
+
+                    this.editable.emit('error', { message: (err as Error).message });
+                    return;
+                  });
+              })()
+                .then(() => {})
+                .catch((err) => {
+                  console.error(err);
+                });
+
+              /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
+              // console.log('title', data[this.field]);
+              // return data;
+            },
           };
 
         return {

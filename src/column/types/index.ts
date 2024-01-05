@@ -1,4 +1,12 @@
-export type ColumnType = 'date' | 'num' | 'num-fmt' | 'html' | 'string' | 'money' | 'money-3';
+export type ColumnType =
+  | 'date'
+  | 'num'
+  | 'num-fmt'
+  | 'html'
+  | 'string'
+  | 'money'
+  | 'money-3'
+  | 'list-dyn';
 export type ColumnField = 'delete' | 'edit' | 'checkbox';
 
 export type EditorType = 'text' | 'string' | 'number' | 'email' | 'money' | 'money-3';
@@ -10,12 +18,22 @@ export interface IDataOptions {
   readonly submittable?: boolean;
   readonly type?: ColumnType;
   readonly editor?: IEditor;
+  readonly src?: string;
 }
 
-export interface IEditor {
-  readonly type?: EditorType;
-  readonly disabled?: boolean;
-  readonly pattern?: string;
-  readonly required?: boolean;
-  readonly step?: HTMLInputElement['step'];
-}
+export type IEditor<T extends EditorType = EditorType> = T extends 'string' | 'text' | 'email'
+  ? {
+      readonly type?: T;
+      readonly disabled?: boolean;
+      readonly required?: boolean;
+      readonly pattern?: string;
+      readonly maxLength?: HTMLInputElement['maxLength'];
+    }
+  : {
+      readonly type?: T;
+      readonly disabled?: boolean;
+      readonly required?: boolean;
+      readonly step?: HTMLInputElement['step'];
+      readonly min?: HTMLInputElement['min'];
+      readonly max?: HTMLInputElement['max'];
+    };

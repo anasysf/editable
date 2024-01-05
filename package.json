@@ -1,11 +1,11 @@
 {
   "name": "editable",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "lint": "eslint --ext .ts,.js src/",
-    "lint:fix": "eslint --ext .ts,.js src/ --fix",
+    "lint": "eslint --ext .ts src/",
+    "lint:fix": "eslint --ext .ts src/ --fix",
     "format": "prettier . --write",
     "build": "pnpm format && pnpm lint:fix && webpack --config webpack.dev.cjs && webpack --config webpack.prod.cjs && webpack --config webpack.prod-jquery.cjs && webpack --config webpack.dev-jquery.cjs",
     "build:prod": "pnpm format && pnpm lint:fix && webpack --config webpack.prod.cjs",
@@ -18,15 +18,16 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.16.0",
-    "@typescript-eslint/parser": "^6.16.0",
+    "@types/jquery": "^3.5.29",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
     "compression-webpack-plugin": "^10.0.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jquery": "^1.5.1",
     "expose-loader": "^4.1.0",
     "prettier": "^3.1.1",
-    "terser-webpack-plugin": "^5.3.9",
+    "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
     "webpack": "^5.89.0",
@@ -34,7 +35,6 @@
     "webpack-merge": "^5.10.0"
   },
   "dependencies": {
-    "@types/jquery": "^3.5.29",
     "datatables.net-bs5": "^1.13.8",
     "jquery": "^3.7.1"
   }

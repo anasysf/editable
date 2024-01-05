@@ -1,46 +1,45 @@
 import type { ColumnField } from './types';
-import type { IconSrcMap, IconSrc } from '../editable/types';
+import type { JSONValues } from '@/types';
+import type Column from '.';
+import type { IconSrcMap, IconSrc } from '@/editable/types';
+import type Editable from '@/editable';
+import HTTP from '@/http';
 
-export default class FieldManager {
-  private readonly _field: ColumnField;
+export default class FieldManager<
+  TData extends Record<string, JSONValues> = Record<string, never>,
+> {
+  private readonly _column: Column<TData>;
+  private readonly _editable: Editable<TData>;
   private readonly _rowIdx: number;
-  private static _iconSrcMap: IconSrcMap = new Map();
-  private readonly _iconSrc: IconSrc = 'fa';
 
-  public constructor(field: ColumnField, rowIdx: number, iconSrc: IconSrc = 'fa') {
-    this._field = field;
+  public constructor(column: Column<TData>, editable: Editable<TData>, rowIdx: number) {
+    this._column = column;
+    this._editable = editable;
     this._rowIdx = rowIdx;
-    this._iconSrc = iconSrc;
-
-    FieldManager._iconSrcMap = new Map([
-      [
-        'fa',
-        {
-          delete: 'fa-regular fa-trash-can text-danger',
-          edit: 'fa-regular fa-pen-to-square text-primary',
-          'save-row-edit': 'fa-solid fa-check text-success',
-          'cancel-row-edit': 'fa-solid fa-xmark text-danger',
-          'save-new-row': 'fa-solid fa-check text-success',
-          'cancel-new-row': 'fa-solid fa-xmark text-danger',
-        },
-      ],
-    ]);
   }
 
-  public get field(): ColumnField {
-    return this._field;
+  private get column(): Column<TData> {
+    return this._column;
   }
 
-  public get rowIdx(): number {
+  private get editable(): Editable<TData> {
+    return this._editable;
+  }
+
+  private get field(): ColumnField {
+    return this.column.field;
+  }
+
+  private get rowIdx(): number {
     return this._rowIdx;
   }
 
-  public get iconSrc(): IconSrc {
-    return this._iconSrc;
+  private get iconSrc(): IconSrc {
+    return this.editable.iconSrc;
   }
 
-  public static get iconSrcMap(): IconSrcMap {
-    return this._iconSrcMap;
+  private get iconSrcMap(): IconSrcMap {
+    return this.editable.iconSrcMap;
   }
 
   public generateCheckboxHTML(): HTMLDivElement {
@@ -61,7 +60,7 @@ export default class FieldManager {
   }
 
   public generateEditHTML(): HTMLSpanElement {
-    const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
+    const iconSrcMap = this.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
       throw new SyntaxError(`Expected a valid 'iconSrc' instead received: ${this.iconSrc}.`);
 
@@ -84,7 +83,7 @@ export default class FieldManager {
   }
 
   public generateDeleteHTML(): HTMLSpanElement {
-    const iconSrcMap = FieldManager.iconSrcMap.get(this.iconSrc);
+    const iconSrcMap = this.iconSrcMap.get(this.iconSrc);
     if (!iconSrcMap)
       throw new SyntaxError(`Expected a valid 'iconSrc' instead received: ${this.iconSrc}.`);
 
@@ -106,58 +105,25 @@ export default class FieldManager {
     return fragment.appendChild(iconWrapper);
   }
 
-  public static toggleIcon(
-    target: EventTarget | HTMLElement,
-    id: HTMLElement['id'],
-    title: HTMLElement['title'],
-    rowIdx: number,
-    className: HTMLElement['className'],
-  ): void {
-    const fragment = document.createDocumentFragment();
+  public retrieveListData<T extends Record<string, JSONValues>[]>(list: T): unknown[] {
+    const data: unknown[] = [];
 
-    const iconWrapper = this.generateIconWrapperBtn(id, title, rowIdx);
-    const icon = this.generateIconBtn(id, title, rowIdx, className);
+    list.forEach((val) => {
+      if (!(this.field in val)) throw new ReferenceError(`Could not find ${this.field}.`);
 
-    iconWrapper.appendChild(icon);
-    fragment.appendChild(iconWrapper);
+      data.push(val[this.field]);
+    });
 
-    if (target instanceof HTMLSpanElement) {
-      target.replaceWith(fragment);
-    } else {
-      const span = (target as HTMLElement).closest('span');
-      if (!span) throw new ReferenceError('Could not find a <span> element.');
-
-      span.replaceWith(fragment);
-    }
+    return data;
   }
 
-  private static generateIconWrapperBtn(
-    id: HTMLSpanElement['id'],
-    title: HTMLSpanElement['title'],
-    rowIdx: number,
-  ): HTMLSpanElement {
-    const iconWrapper = document.createElement('span');
-    iconWrapper.id = `${id}-icon-wrapper-${rowIdx}`;
-    iconWrapper.setAttribute('name', `${id}-icon`);
-    iconWrapper.title = title;
-    iconWrapper.role = 'button';
+  public async getListDynData<T extends Record<string, JSONValues>[]>(): Promise<T> {
+    const http = new HTTP(this.column.listDynSrc);
 
-    return iconWrapper;
-  }
+    const list = await http.send<T>({ method: 'GET' });
+    if (!Array.isArray(list))
+      throw new TypeError('The return type of the `list-dyn` is not an array.');
 
-  private static generateIconBtn(
-    id: HTMLElement['id'],
-    title: HTMLElement['title'],
-    rowIdx: number,
-    className: HTMLElement['className'],
-  ): HTMLElement {
-    const icon = document.createElement('i');
-    icon.id = `${id}-icon-${rowIdx}`;
-    icon.setAttribute('name', `${id}-icon`);
-    icon.className = className;
-    icon.title = title;
-    icon.role = 'button';
-
-    return icon;
+    return list;
   }
 }

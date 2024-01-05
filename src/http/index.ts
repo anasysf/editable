@@ -21,20 +21,19 @@ export default class HTTP {
     return formData;
   }
 
-  public async send<T extends Record<string, unknown>>(
-    init: RequestInit,
-    format: HTTPRequestFormat = 'json',
-    body?: T,
-  ): Promise<T> {
+  public async send<
+    T extends Record<string, unknown> | Record<string, unknown>[],
+    TBody extends Record<string, unknown> | undefined = undefined,
+  >(init: RequestInit, format: HTTPRequestFormat = 'json', body?: TBody): Promise<T> {
     init = {
-      ...init,
       headers: {
         'Content-Type': format === 'json' ? 'application/json' : 'multipart/form-data',
       },
       body:
         format === 'json' && body !== undefined
           ? JSON.stringify(body)
-          : this.formDataFromObj(body),
+          : this.formDataFromObj(body as TBody),
+      ...init,
     };
 
     const res = await fetch(this.URL, init);
