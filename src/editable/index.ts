@@ -489,5 +489,9 @@ export default class Editable<
     this.tbody.addEventListener('click', (evt) => {
       this.eventHandler.handleByName(evt);
     });
+
+    this.tbody.addEventListener('dblclick', (evt) => {
+      this.eventHandler.handleByTagName(evt);
+    });
   }
 }

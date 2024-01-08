@@ -143,6 +143,13 @@ export default class EventHandler<
     }
   }
 
+  public handleByTagName(evt: MouseEvent): void {
+    const target = evt.target;
+    if (!target || !(target instanceof HTMLElement)) return;
+
+    this.handleOnDblClick(target);
+  }
+
   /**
    * Handles the event when the edit icon is clicked.
    * @param target - The HTML target Element.
@@ -443,5 +450,13 @@ export default class EventHandler<
     this.dataTable.row(tr).remove().draw(false);
 
     this.editable.emit(EditableEvent.NEW_ROW_CANCELLED, { tr, row });
+  }
+
+  private handleOnDblClick(target: HTMLElement): void {
+    const tr = getTrFromTarget(target);
+    const row = this.dataTable.row(target);
+    const rowData = row.data();
+
+    this.editable.emit(EditableEvent.ROW_DBL_CLICK, { tr, row, rowData });
   }
 }

@@ -126,6 +126,9 @@
           .on('new-row-cancelled', ({ tr, row }) => {
             console.info(tr, row);
           })
+          .on('row-dbl-click', ({ tr, row, rowData }) => {
+            console.info(tr, row, rowData);
+          })
           .on('cancel', ({ tr, row, rowData }) => {
             console.info(tr, row, rowData);
           })

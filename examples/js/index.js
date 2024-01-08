@@ -1,4 +1,5 @@
 $(function () {
+  import { Field } from 'editable';
   const fields = [
     new Field({
       name: 'test',
@@ -40,9 +41,7 @@ $(function () {
   editable
     .on('input-invalid', ({ message, tr, row, element, value }) => {
       console.error(message, tr, row, element, value);
-      element.type === 'email'
-        ? (element.type = 'number')
-        : (element.type = element.type);
+      element.type === 'email' ? (element.type = 'number') : (element.type = element.type);
     })
     .on('input-valid', ({ tr, row, element, value }) => {
       console.info(tr, row, element, value);

@@ -17,6 +17,7 @@ export enum EditableEvent {
   NEW_ROW_SAVED = 'new-row-saved',
   NEW_ROW_CANCEL = 'new-row-cancel',
   NEW_ROW_CANCELLED = 'new-row-cancelled',
+  ROW_DBL_CLICK = 'row-dbl-click',
   CANCEL = 'cancel',
   CANCELLED = 'cancelled',
 }
@@ -110,6 +111,12 @@ interface NewRowCancelled<
   readonly row: ApiRowMethods<TData>;
 }
 
+interface RowDblClick<TData extends Record<string, JSONValues> = Record<string, JSONValues>> {
+  readonly tr: HTMLTableRowElement;
+  readonly row: ApiRowMethods<TData>;
+  readonly rowData: TData;
+}
+
 interface Cancel<TData extends Record<string, JSONValues> = Record<string, JSONValues>> {
   readonly tr: HTMLTableRowElement;
   readonly row: ApiRowMethods<TData>;
@@ -139,6 +146,7 @@ export interface EditableEventsMap<
   readonly [EditableEvent.NEW_ROW_SAVED]: NewRowSaved<TData>;
   readonly [EditableEvent.NEW_ROW_CANCEL]: NewRowCancel<TData>;
   readonly [EditableEvent.NEW_ROW_CANCELLED]: NewRowCancelled<TData>;
+  readonly [EditableEvent.ROW_DBL_CLICK]: RowDblClick<TData>;
   readonly [EditableEvent.CANCEL]: Cancel<TData>;
   readonly [EditableEvent.CANCELLED]: Cancelled<TData>;
 }
