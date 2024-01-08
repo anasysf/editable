@@ -71,7 +71,8 @@ export type ClassNames =
   | 'inp-email'
   | 'textarea'
   | 'inp-valid'
-  | 'inp-invalid';
+  | 'inp-invalid'
+  | 'sel';
 export type ClassNamesMap = Map<ClassNames, HTMLElement['className']>;
 
 interface InputInvalid<TData extends Record<string, JSONValues> = Record<string, never>> {

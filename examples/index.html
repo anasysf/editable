@@ -34,7 +34,10 @@
           data-options='{ "field": "email", "editor": { "type": "email", "maxLength": 1 } }'
         />
         <col
-          data-options='{ "field": "height", "type": "money-3", "editor": { "type": "money-3", "min": 1, "maxLength": 2 } }'
+          data-options='{ "field": "height", "type": "money-3", "editor": { "type": "money-3", "min": 1, "max": 2 } }'
+        />
+        <col
+          data-options='{ "field": "test", "type": "list-stc", "data": [ { "test": 1 }, { "test": 2 }] }'
         />
         <col data-options='{ "field": "edit" }' />
         <col data-options='{ "field": "delete" }' />
@@ -45,6 +48,7 @@
           <th scope="col">Last Name</th>
           <th scope="col">Email</th>
           <th scope="col">Height</th>
+          <th scope="col">Test</th>
           <th scope="col"></th>
           <th scope="col"></th>
         </tr>
@@ -59,7 +63,7 @@
         const editable = $('#data-table').editable({
           rowId: 'id',
           dataSrc: {
-            src: 'https://dummyjson.com/users',
+            src: 'https://dummyjson.com/users?limit=2',
             method: 'GET',
             prop: 'users',
           },

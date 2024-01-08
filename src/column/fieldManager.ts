@@ -3,7 +3,6 @@ import type { JSONValues } from '@/types';
 import type Column from '.';
 import type { IconSrcMap, IconSrc } from '@/editable/types';
 import type Editable from '@/editable';
-import HTTP from '@/http';
 
 export default class FieldManager<
   TData extends Record<string, JSONValues> = Record<string, never>,
@@ -105,25 +104,19 @@ export default class FieldManager<
     return fragment.appendChild(iconWrapper);
   }
 
-  public retrieveListData<T extends Record<string, JSONValues>[]>(list: T): unknown[] {
-    const data: unknown[] = [];
+  public getFieldFromData(): unknown {
+    const field = this.field;
+    const data = this.column.listStcData;
 
-    list.forEach((val) => {
-      if (!(this.field in val)) throw new ReferenceError(`Could not find ${this.field}.`);
+    const obj = data.at(this.rowIdx);
+    if (!obj)
+      throw new RangeError(
+        `Could not find a value in the list that corresponds to the index: ${this.rowIdx}.`,
+      );
 
-      data.push(val[this.field]);
-    });
+    if (!(field in obj))
+      throw new ReferenceError(`Could not find a value with the key: ${field} in the object.`);
 
-    return data;
-  }
-
-  public async getListDynData<T extends Record<string, JSONValues>[]>(): Promise<T> {
-    const http = new HTTP(this.column.listDynSrc);
-
-    const list = await http.send<T>({ method: 'GET' });
-    if (!Array.isArray(list))
-      throw new TypeError('The return type of the `list-dyn` is not an array.');
-
-    return list;
+    return obj[field];
   }
 }

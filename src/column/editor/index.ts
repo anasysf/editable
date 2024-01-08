@@ -4,7 +4,7 @@ import type { ClassNamesMap } from '@/editable/types';
 import type { JSONValues } from '@/types';
 import { formatNumber } from '@utils';
 import { defaultEditorOptions } from './defaults';
-import { isIEditorString, isIEditorNumber } from './utils';
+import { isIEditorString, isIEditorNumber, isIEditorListStc } from './utils';
 
 export default class EditorManager<
   TData extends Record<string, JSONValues> = Record<string, never>,
@@ -24,12 +24,13 @@ export default class EditorManager<
   }
 
   private get editorOptions(): IEditor {
-    return defaultEditorOptions(this.column.editorOptions);
+    return defaultEditorOptions(this.column.editorOptions, this.column);
   }
 
   public generateEditorHTML(
     defaultValue?: HTMLElementWithValue['value'] | HTMLInputElement['valueAsNumber'],
   ): HTMLElementWithValue {
+    console.log(this.editorOptions);
     switch (this.editorOptions.type) {
       case 'text':
         return this.generateTextAreaHTML(String(defaultValue ?? ''));
@@ -43,6 +44,8 @@ export default class EditorManager<
         return this.generateMoney3InputHTML(Number(defaultValue ?? 0));
       case 'email':
         return this.generateEmailInputHTML(String(defaultValue ?? ''));
+      case 'list-stc':
+        return this.generateListStcSelectHTML(this.column.listStcData, this.column.field);
       default:
         throw new TypeError('Invalid editor type.');
     }
@@ -205,5 +208,28 @@ export default class EditorManager<
     this.editorOptions.max ? (input.max = this.editorOptions.max) : undefined;
 
     return fragment.appendChild(input);
+  }
+
+  private generateListStcSelectHTML(
+    data: Record<string, unknown>[],
+    field: string,
+  ): HTMLSelectElement {
+    if (!isIEditorListStc(this.editorOptions))
+      throw new TypeError('The `editor` property passed does not follow the correct schema.');
+
+    const fragment = document.createDocumentFragment();
+    const className = this.classNamesMap.get('sel') ?? 'form-select form-select-sm';
+
+    const select = document.createElement('select');
+    select.setAttribute('name', 'list-stc');
+    select.className = className;
+    select.required = this.editorOptions.required ?? true;
+    select.disabled = this.editorOptions.disabled ?? false;
+
+    for (const obj of data)
+      for (const [key, value] of Object.entries(obj))
+        select.add(new Option(String(value), key, key === field, key === field));
+
+    return fragment.appendChild(select);
   }
 }

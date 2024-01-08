@@ -334,6 +334,7 @@ export default class Editable<
       'inp-num': 'form-control form-control-sm',
       'inp-email': 'form-control form-control-sm',
       textarea: 'form-control form-control-sm',
+      sel: 'form-select form-select-sm',
       'inp-valid': 'is-valid',
       'inp-invalid': 'is-invalid',
       ...options.classNamesMap,

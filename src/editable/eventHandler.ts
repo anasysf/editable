@@ -177,7 +177,7 @@ export default class EventHandler<
       if (!column) throw new RangeError(`Could not find a column at index: ${idx}.`);
 
       const editorOptions = column.editorOptions;
-      if (!editorOptions) continue;
+      if (!editorOptions && column.type !== 'list-stc') continue;
 
       const editorManager = new EditorManager(column);
       const field = column.field as keyof TData;

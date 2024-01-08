@@ -6,20 +6,34 @@ export type ColumnType =
   | 'string'
   | 'money'
   | 'money-3'
-  | 'list-dyn';
+  | 'list-stc';
 export type ColumnField = 'delete' | 'edit' | 'checkbox';
 
-export type EditorType = 'text' | 'string' | 'number' | 'email' | 'money' | 'money-3';
+export type EditorType =
+  | 'text'
+  | 'string'
+  | 'number'
+  | 'email'
+  | 'money'
+  | 'money-3'
+  | 'list-stc';
 
 export type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
-export interface IDataOptions {
-  readonly field: ColumnField;
-  readonly submittable?: boolean;
-  readonly type?: ColumnType;
-  readonly editor?: IEditor;
-  readonly src?: string;
-}
+export type IDataOptions<T extends ColumnType = ColumnType> = T extends 'list-stc'
+  ? {
+      readonly field: ColumnField;
+      readonly submittable?: boolean;
+      readonly type?: T;
+      readonly editor?: IEditor<'list-stc'>;
+      readonly data: Record<string, unknown>[];
+    }
+  : {
+      readonly field: ColumnField;
+      readonly submittable?: boolean;
+      readonly type?: T;
+      readonly editor?: IEditor;
+    };
 
 export type IEditor<T extends EditorType = EditorType> = T extends 'string' | 'text' | 'email'
   ? {
@@ -29,11 +43,17 @@ export type IEditor<T extends EditorType = EditorType> = T extends 'string' | 't
       readonly pattern?: string;
       readonly maxLength?: HTMLInputElement['maxLength'];
     }
-  : {
-      readonly type?: T;
-      readonly disabled?: boolean;
-      readonly required?: boolean;
-      readonly step?: HTMLInputElement['step'];
-      readonly min?: HTMLInputElement['min'];
-      readonly max?: HTMLInputElement['max'];
-    };
+  : T extends 'list-stc'
+    ? {
+        readonly type?: T;
+        readonly disabled?: boolean;
+        readonly required?: boolean;
+      }
+    : {
+        readonly type?: T;
+        readonly disabled?: boolean;
+        readonly required?: boolean;
+        readonly step?: HTMLInputElement['step'];
+        readonly min?: HTMLInputElement['min'];
+        readonly max?: HTMLInputElement['max'];
+      };

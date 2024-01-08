@@ -29,3 +29,12 @@ export function isIEditorNumber(
     !('maxLength' in editorOptions)
   );
 }
+
+export function isIEditorListStc(
+  editorOptions: unknown,
+): editorOptions is IEditor<'list-stc'> {
+  console.log(editorOptions);
+  return (
+    isObject(editorOptions) && 'type' in editorOptions && editorOptions.type === 'list-stc'
+  );
+}

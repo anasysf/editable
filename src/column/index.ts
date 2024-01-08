@@ -5,7 +5,7 @@ import type { JSONValues } from '@/types';
 import FieldManager from './fieldManager';
 import EditorManager from './editor';
 import { formatNumber } from '@utils';
-import ResponseError from '@/http/responseError';
+import { isIDataOptionsListStc } from './utils';
 
 export default class Column<TData extends Record<string, JSONValues> = Record<string, never>> {
   private _dataOptions!: IDataOptions;
@@ -44,11 +44,13 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
     return this.editorOptions !== undefined;
   }
 
-  public get listDynSrc(): string {
-    if (!this.dataOptions.src || this.dataOptions.src.trim().length === 0)
-      throw new ReferenceError('The `src` field is required.');
+  public get listStcData(): Record<string, unknown>[] {
+    if (!isIDataOptionsListStc(this.dataOptions))
+      throw new ReferenceError(
+        'The [data-options] passed does not follow the correct schema.',
+      );
 
-    return this.dataOptions.src;
+    return this.dataOptions.data;
   }
 
   private set dataOptions(dataOptionsStr: DOMStringMap[string]) {
@@ -59,11 +61,11 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
 
     if (dataOptions.editor && !dataOptions.editor.type)
       dataOptions = {
-        ...dataOptions,
         editor: {
-          type: 'text',
+          type: 'string',
         },
-      };
+        ...dataOptions,
+      } as IDataOptions<'string'>;
 
     if (dataOptions.submittable === undefined)
       dataOptions = {
@@ -146,45 +148,11 @@ export default class Column<TData extends Record<string, JSONValues> = Record<st
             type: 'num',
             orderable: true,
           };
-        else if (this.type === 'list-dyn')
+        else if (this.type === 'list-stc')
           return {
-            data: (data, _set, _meta, { row }): void => {
+            data: (_data, _set, _meta, { row }): unknown => {
               const fieldManager = new FieldManager(this, this.editable, row);
-
-              (async (): Promise<void> => {
-                await fieldManager
-                  .getListDynData()
-                  .then((objs) => {
-                    const obj = fieldManager.retrieveListData(objs);
-                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
-                    console.log('pre', data[this.field]);
-                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
-                    data[this.field] = obj[row];
-                    /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
-                    console.log('post', data[this.field]);
-                  })
-                  .catch((err) => {
-                    if (err instanceof ResponseError) {
-                      this.editable.emit('httpError', {
-                        status: err.status,
-                        statusText: err.statusText,
-                        url: err.url,
-                      });
-                      return;
-                    }
-
-                    this.editable.emit('error', { message: (err as Error).message });
-                    return;
-                  });
-              })()
-                .then(() => {})
-                .catch((err) => {
-                  console.error(err);
-                });
-
-              /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
-              // console.log('title', data[this.field]);
-              // return data;
+              return fieldManager.getFieldFromData();
             },
           };
 
