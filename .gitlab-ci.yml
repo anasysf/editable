@@ -13,6 +13,8 @@ before_script:
   - curl -fsSL https://get.pnpm.io/install.sh | sh -
 
 build:
+  tags:
+    - build
   stage: build
   script:
     - pnpm install
