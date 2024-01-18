@@ -1,0 +1,63 @@
+import { defineConfig } from 'rollup';
+import terser from '@rollup/plugin-terser';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+import pkg from './package.json' assert { type: 'json' };
+import externalGlobals from 'rollup-plugin-external-globals';
+
+const production = process.env.NODE_ENV === 'production';
+console.debug(`${production ? 'PRODUCTION' : 'DEVELOPMENT'} mode bundle.`);
+
+export default defineConfig({
+  input: 'src/index.ts',
+  output: [
+    {
+      file: pkg.module,
+      format: 'es',
+      sourcemap: true,
+      name: pkg.name,
+      exports: 'named',
+    },
+    {
+      file: pkg.main,
+      format: 'iife',
+      sourcemap: !production ? 'inline' : 'hidden',
+      name: 'ed',
+      exports: 'named',
+      globals: {
+        'datatables.net-bs5': 'DataTable',
+      },
+      plugins: [
+        production &&
+          terser({
+            ecma: 2020,
+            compress: true,
+            mangle: true,
+            maxWorkers: 4,
+          }),
+      ],
+    },
+  ],
+  external: ['jquery', 'datatables.net-bs5'],
+  plugins: [
+    /* production &&
+      terser({
+        ecma: 2020,
+        compress: true,
+        mangle: true,
+        maxWorkers: 4,
+      }), */
+    externalGlobals({
+      'datatables.net-bs5': 'DataTable',
+    }),
+    nodeResolve({
+      browser: true,
+      extensions: ['.ts', '.js'],
+    }),
+    commonjs(),
+    typescript({
+      tsconfig: './tsconfig.build.json',
+    }),
+  ],
+});

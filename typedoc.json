@@ -1,0 +1,9 @@
+{
+  "entryPoints": [
+    "src/index.ts",
+    "src/editable/types/**/*.ts",
+    "src/field/types/**/*.ts",
+    "src/types/**/*.ts"
+  ],
+  "out": "docs"
+}
