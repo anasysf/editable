@@ -4,7 +4,8 @@ import type {
   IDataSrcPOST,
   IDataSrcGET,
 } from '../types/options/dataSrc';
-import { isObject, isString } from '../../utils/type-guard';
+import type { EditableOptions, Options } from '../types/options';
+import { exists, isObject, isString } from '../../utils/type-guard';
 import { stringNotEmpty } from '../../utils/validation';
 
 /**
@@ -56,4 +57,8 @@ export function isDataSrcString(
   dataSrc: unknown,
 ): dataSrc is Exclude<DataSrc<DataSrcMethod>, IDataSrcGET | IDataSrcPOST> {
   return isString(dataSrc) && stringNotEmpty(dataSrc);
+}
+
+export function isEditableOptions(options: Options<boolean>): options is EditableOptions {
+  return !exists(!!options.editable) || (exists(options.editable) && options.editable);
 }

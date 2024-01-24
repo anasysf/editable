@@ -6,6 +6,14 @@ module.exports = {
   parserOptions: {
     project: ['./tsconfig.eslint.json'],
   },
+  overrides: [
+    {
+      files: ['__tests__/**/*'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
   plugins: ['@typescript-eslint'],
   rules: {
     '@typescript-eslint/explicit-member-accessibility': 'error',

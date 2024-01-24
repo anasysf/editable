@@ -5,17 +5,18 @@ import {
   EditButton,
   EditorType,
   FieldType,
+  Events,
 } from '../../../dist/es/index.js';
 
 const editable = new Editable('my-table', {
   dataSrc: {
-    src: 'https://jsonplaceholder.typicode.com/posts',
+    src: 'https://dummyjson.com/products',
     method: 'GET',
+    prop: 'products',
   },
   fields: [
     new Field({
       name: 'id',
-      sortable: true,
       type: FieldType.NUM,
     }),
     new Field({
@@ -28,6 +29,11 @@ const editable = new Editable('my-table', {
     }),
   ],
   buttons: [new EditButton()],
+  updateDataSrc: {
+    src: 'https://dummyjson.com/products/1',
+  },
 });
+
+editable.on(Events.UPDATED, ({ test }) => console.log(test));
 
 console.log(editable);

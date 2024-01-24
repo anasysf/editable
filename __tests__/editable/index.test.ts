@@ -1,4 +1,3 @@
-/* import { describe, test, expect } from '@jest/globals';
 import Editable from '../../src/editable';
 
 describe('Initiate an Editable instance.', () => {
@@ -7,8 +6,9 @@ describe('Initiate an Editable instance.', () => {
     table.id = 'test';
 
     const editable = new Editable(table.id, {
-      dataSrc: '',
+      dataSrc: 'a',
+      fields: [],
     });
     expect(editable.tableId).toBe(table.id);
   });
-}); */
+});

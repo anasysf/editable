@@ -9,7 +9,7 @@ import { isIDataSrcPost, isDataSrcString } from '../utils/type-guard';
  *
  * @returns The DataTable's config.
  */
-export function defaultConfig(options: Options, columns: ConfigColumns[]): Config {
+export function defaultConfig(options: Options<boolean>, columns: ConfigColumns[]): Config {
   const dataSrc = options.dataSrc;
 
   return {

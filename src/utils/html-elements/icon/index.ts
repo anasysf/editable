@@ -42,6 +42,7 @@ export default class Icon extends HTMLElementBase {
     const icon = document.createElement('i');
     icon.role = 'button';
     icon.className = this.icon;
+    this.name && icon.setAttribute('name', this.name);
 
     span.appendChild(icon);
 

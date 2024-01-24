@@ -1,6 +1,6 @@
 import type { Api, Config, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
-import type { JSONValue, TableID } from '../types';
+import type { HTTPRequestFormat, JSONValue, TableID } from '../types';
 import type { NormalizedOptions, Options } from './types/options';
 import type { IconMap, IconSrc } from './types/options/iconMap';
 import { defaultOptions } from './defaults/options';
@@ -10,13 +10,22 @@ import type Field from '../field';
 import type { FieldType } from '../field/types/options';
 import type { EditorType } from '../editor/types/options';
 import type Editor from '../editor';
-import type ButtonBase from '../button/base';
+import type IconButtonBase from '../button/base';
+import { ButtonTypeIconMap } from '../button/types';
+import { isEditableOptions } from './utils/type-guard';
+import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateDataSrc';
+import { isString } from '../utils/type-guard';
+import EventEmitter from '../utils/event-emitter';
+import type { EventMap } from './types/events';
 
 /**
  * Class representing the Editable instance.
  * @typeParam TData - The type of the data in the Editable instance.
  */
-export default class Editable<TData extends Record<string, JSONValue>> {
+export default class Editable<
+  TData extends Record<string, JSONValue>,
+  E extends boolean | undefined = true,
+> extends EventEmitter<EventMap> {
   /**
    * The HTML Table element ID.
    *
@@ -36,7 +45,7 @@ export default class Editable<TData extends Record<string, JSONValue>> {
    *
    * @internal
    */
-  private readonly _options: NormalizedOptions;
+  private readonly _options: NormalizedOptions<E>;
 
   /**
    * The DataTable instance config.
@@ -58,12 +67,14 @@ export default class Editable<TData extends Record<string, JSONValue>> {
    * @param tableId - The Table element's ID that the instance attaches to.
    * @param options - The Editable instance's options.
    */
-  public constructor(tableId: TableID, options: Options) {
+  public constructor(tableId: TableID, options: Options<E>) {
     // Validate the `tableId` & the element associated with it.
     const table = validateTableElement(tableId);
 
     // Get the default options.
     const opts = defaultOptions(options);
+
+    super();
 
     // Set the tableId.
     this._tableId = tableId;
@@ -110,7 +121,7 @@ export default class Editable<TData extends Record<string, JSONValue>> {
    *
    * @returns The Editable instance's options.
    */
-  public get options(): NormalizedOptions {
+  public get options(): NormalizedOptions<boolean> {
     return this._options;
   }
 
@@ -149,7 +160,7 @@ export default class Editable<TData extends Record<string, JSONValue>> {
     return this.fields.map((field) => field.editor);
   }
 
-  public get buttons(): ButtonBase[] | undefined {
+  public get buttons(): IconButtonBase<ButtonTypeIconMap>[] | undefined {
     return this.options.buttons;
   }
 
@@ -159,6 +170,34 @@ export default class Editable<TData extends Record<string, JSONValue>> {
 
   public get iconMap(): IconMap {
     return this.options.iconMap;
+  }
+
+  public get updateDataSrc(): UpdateDataSrc | undefined {
+    if (isEditableOptions(this.options)) return this.options.updateDataSrc;
+  }
+
+  public get updateDataSrcSource(): string | undefined {
+    if (isEditableOptions(this.options))
+      if (isString(this.updateDataSrc)) return this.updateDataSrc;
+      else return this.updateDataSrc?.src;
+  }
+
+  public get updateDataSrcMethod(): UpdateDataSrcMethod | undefined {
+    if (isEditableOptions(this.options))
+      if (isString(this.updateDataSrc)) return 'PUT';
+      else return this.updateDataSrc?.method ?? 'PUT';
+  }
+
+  public get updateDataSrcFormat(): HTTPRequestFormat | undefined {
+    if (isEditableOptions(this.options))
+      if (isString(this.updateDataSrc)) return 'json';
+      else return this.updateDataSrc?.format ?? 'json';
+  }
+
+  public get updateDataSrcProp(): string | undefined {
+    if (isEditableOptions(this.options))
+      if (isString(this.updateDataSrc)) return 'result.content';
+      else return this.updateDataSrc?.prop ?? 'result.content';
   }
 
   /* private get editorsMap(): Map<string, Editor<EditorType> | undefined> {
@@ -204,13 +243,12 @@ export default class Editable<TData extends Record<string, JSONValue>> {
       sortable: false,
       data: null,
       render: (_row, _type, _set, { row }): HTMLSpanElement['outerHTML'] => {
-        const editRowIcon = this.iconMap[this.iconSrc]['edit-row'];
-        if (!editRowIcon)
-          throw new ReferenceError(
-            `Please set a 'edit-row' icon for the 'iconSrc' specified: ${this.iconSrc}.`,
+        if (button.type === ButtonTypeIconMap.EDIT && !this.isEditable)
+          throw new Error(
+            "Can't have an edit button on this instance because the `editable` property is set to false.",
           );
 
-        return button.generateHTML(this.dataTable.row(row), editRowIcon).outerHTML;
+        return button.generateHTML(this.dataTable.row(row), this).outerHTML;
       },
       createdCell: (cell, _cd, _rd, rowIndex): void => {
         (cell as HTMLTableCellElement).addEventListener('click', (evt): void => {

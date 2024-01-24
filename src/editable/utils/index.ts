@@ -1,35 +1,25 @@
+import type { ApiRowMethods } from 'datatables.net-bs5';
+import type Editable from '..';
+import type SubmitButton from '../../button/submit-button';
+import type { JSONValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
 
-export function replaceEditIcon(
-  rowIdx: number,
-  iconClass: HTMLElement['className'],
-  className?: HTMLSpanElement['className'],
-): void {
+export function replaceEditIcon<TData extends Record<string, JSONValue>>(
+  row: ApiRowMethods<TData>,
+  editable: Editable<TData, boolean>,
+  submitButton: SubmitButton,
+): HTMLSpanElement {
+  const rowIdx = row.index();
+
   const editIconID = `edit-row-${rowIdx}-btn`;
   const editIcon = document.getElementById(editIconID);
   if (!editIcon)
     throw new ReferenceError(`Could not find an edit icon with the id: ${editIconID}.`);
 
-  const submitIcon = setSubmitIcon(rowIdx, iconClass, className);
+  const submitIcon = submitButton.generateHTML(row, editable);
   editIcon.replaceWith(submitIcon);
-}
 
-function setSubmitIcon(
-  rowIdx: number,
-  iconClass: HTMLElement['className'],
-  className?: HTMLSpanElement['className'],
-): HTMLSpanElement {
-  const id = `submit-row-${rowIdx}-btn`;
-  const name = 'submit-row-btn';
-
-  const icon = new Icon({
-    id,
-    icon: iconClass,
-    name,
-    className,
-  });
-
-  return icon.generateHTML();
+  return submitIcon;
 }
 
 export function setCancelIcon(

@@ -1,4 +1,4 @@
-import ButtonBase from '../base';
+import IconButtonBase from '../base';
 import type { Options, NormalizedOptions } from './types/options';
 import Icon from '../../utils/html-elements/icon';
 import { defaultOptions } from './defaults/options';
@@ -7,12 +7,14 @@ import type { JSONValue } from '../../types';
 import type { HTMLElementsWithValue } from '../../types';
 import { replaceEditIcon } from '../../editable/utils';
 import type Editable from '../../editable';
+import { ButtonTypeIconMap } from '../types';
+import SubmitButton from '../submit-button';
 
-export default class EditButton extends ButtonBase {
+export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
   private readonly _options: NormalizedOptions;
 
   public constructor(options?: Options) {
-    super();
+    super(ButtonTypeIconMap.EDIT);
 
     const opts = defaultOptions(options);
 
@@ -33,9 +35,14 @@ export default class EditButton extends ButtonBase {
 
   public generateHTML<TData extends Record<string, JSONValue>>(
     row: ApiRowMethods<TData>,
-    icon: HTMLElement['className'],
+    editable: Editable<TData, boolean>,
   ): HTMLSpanElement {
     const rowIdx = row.index();
+    const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
+    if (!icon)
+      throw new ReferenceError(
+        `Could not find an icon for the type: ${this.type}, the iconSrc: ${editable.iconSrc}.`,
+      );
 
     const element = new Icon({
       id: `edit-row-${rowIdx}-btn`,
@@ -50,10 +57,16 @@ export default class EditButton extends ButtonBase {
   public onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
-    editable: Editable<TData>,
+    editable: Editable<TData, boolean>,
   ): void {
     const target = evt.target;
     if (!target || target instanceof HTMLTableCellElement) return;
+
+    if (target instanceof HTMLElement) {
+      const targetName = target.getAttribute('name');
+      if (!targetName || targetName.trim().length === 0 || targetName.trim() !== 'edit-row-btn')
+        return;
+    }
 
     const rowData = row.data();
     const rowIdx = row.index();
@@ -61,33 +74,38 @@ export default class EditButton extends ButtonBase {
 
     const iconSrc = editable.iconSrc;
     const iconMap = editable.iconMap;
-    const submitIcon = iconMap[iconSrc]['submit-row'];
+
+    const submitButton = new SubmitButton();
+    const submitIcon = submitButton.getIconByType(iconSrc, iconMap);
     if (!submitIcon)
       throw new ReferenceError(
         `Please set a 'submit-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
       );
 
-    const inputElements: HTMLElementsWithValue[] = [];
+    const elements: HTMLElementsWithValue[] = [];
     for (const field of fields) {
       const editor = field.editor;
       if (!editor) continue;
 
       const fieldName = field.name as keyof TData;
-      const inputElement = editor.generateHTML(
-        fieldName as Extract<keyof typeof fieldName, string>,
-        rowIdx,
-      );
-
       if (!(fieldName in rowData)) continue;
 
-      rowData[fieldName] = inputElement.outerHTML as Extract<TData, TData[typeof fieldName]>;
+      const element = editor.generateHTML(
+        fieldName as Extract<keyof typeof fieldName, string>,
+        rowIdx,
+        rowData[fieldName] as Extract<TData[typeof fieldName], string>,
+      );
 
-      inputElements.push(inputElement);
+      rowData[fieldName] = element.outerHTML as Extract<TData, TData[typeof fieldName]>;
+      elements.push(element);
     }
 
-    if (inputElements.length !== 0) {
+    if (elements.length !== 0) {
       row.data(rowData).draw(false);
-      replaceEditIcon(rowIdx, submitIcon, 'text-success');
+      const submitBtn = replaceEditIcon(row, editable, submitButton);
+      submitBtn.addEventListener('click', (evt): void => {
+        void submitButton.onClick(evt, row, editable);
+      });
     }
   }
 }

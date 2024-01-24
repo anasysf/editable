@@ -11,6 +11,7 @@ export type NumberEditorType = Extract<EditorType, EditorType.NUMBER>;
 
 interface OptionsBASE<T extends EditorType> {
   readonly type: T;
+  readonly className?: HTMLElementsWithValue['className'];
   readonly required?: HTMLElementsWithValue['required'];
   readonly readonly?: HTMLInputs['readOnly'];
   readonly disabled?: HTMLElementsWithValue['disabled'];
@@ -29,8 +30,9 @@ export type NumberOptions<T extends NumberEditorType> = OptionsBASE<T> & {
 };
 
 export type Options<T extends EditorType> =
-  | StringOptions<Extract<T, StringEditorType>>
-  | NumberOptions<Extract<T, NumberEditorType>>;
+  T extends Extract<T, StringEditorType>
+    ? StringOptions<Extract<T, StringEditorType>>
+    : NumberOptions<Extract<T, NumberEditorType>>;
 
 export type NormalizedOptions<T extends EditorType> = WithRequired<
   OptionsBASE<T>,

@@ -3,7 +3,7 @@ stages:
 
 variables:
   # Customize these variables as needed
-  NODE_IMAGE: "node:21"
+  NODE_IMAGE: 'node:21'
 
 before_script:
   - apt-get update -qy
@@ -22,4 +22,3 @@ build:
   artifacts:
     paths:
       - dist/
-

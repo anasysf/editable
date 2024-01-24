@@ -1,7 +1,14 @@
 import type { DataSrc, DataSrcMethod } from '../types/options/dataSrc';
 import type { NormalizedOptions, Options } from '../types/options';
 import type { IconMap, IconSrc } from '../types/options/iconMap';
-import { isIDataSrcGet, isDataSrcString, isIDataSrcPost } from '../utils/type-guard';
+import {
+  isIDataSrcGet,
+  isDataSrcString,
+  isIDataSrcPost,
+  isEditableOptions,
+} from '../utils/type-guard';
+import type { IUpdateDataSrc, UpdateDataSrc } from '../types/options/updateDataSrc';
+import { isString } from '../../utils/type-guard';
 
 function defaultDataSrc<T extends DataSrcMethod>(dataSrc: DataSrc<T>): DataSrc<T> {
   if (isIDataSrcGet(dataSrc))
@@ -32,24 +39,47 @@ function defaultIconMap(iconMap?: IconMap): Required<IconMap> {
     fa: {
       'edit-row': 'fa-regular fa-pen-to-square',
       'submit-row': 'fa-solid fa-check',
+      'delete-row': 'fa-regular fa-trash-can',
       ...iconMap?.fa,
     },
   };
 }
 
-export function defaultOptions(options: Options): NormalizedOptions {
+function defaultUpdateDataSrc(updateDataSrc: UpdateDataSrc): IUpdateDataSrc {
+  if (isString(updateDataSrc))
+    return {
+      src: updateDataSrc,
+      method: 'PUT',
+      format: 'json',
+      prop: 'result.content',
+    };
+  else
+    return {
+      src: updateDataSrc.src,
+      method: updateDataSrc.method ?? 'PUT',
+      format: updateDataSrc.format ?? 'json',
+      prop: updateDataSrc.prop ?? 'result.content',
+    };
+}
+
+export function defaultOptions<E extends boolean | undefined>(
+  options: Options<E>,
+): NormalizedOptions<E> {
   const fields = options.fields;
-  const editable = options.editable ?? (true as const);
+  const buttons = options.buttons;
+  const editable = (options.editable ?? true) as E;
   const dataSrc = defaultDataSrc(options.dataSrc);
   const iconSrc = options.iconSrc ?? ('fa' as IconSrc);
   const iconMap = defaultIconMap(options.iconMap);
+  const updateDataSrc = isEditableOptions(options) && options.updateDataSrc;
 
   return {
-    ...options,
-    editable,
+    buttons,
     dataSrc,
+    editable,
     fields,
-    iconSrc,
     iconMap,
-  };
+    iconSrc,
+    ...(updateDataSrc && { updateDataSrc: defaultUpdateDataSrc(updateDataSrc) }),
+  } as NormalizedOptions<E>;
 }
