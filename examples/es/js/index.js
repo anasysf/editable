@@ -1,12 +1,4 @@
-import {
-  Editable,
-  Field,
-  Editor,
-  EditButton,
-  EditorType,
-  FieldType,
-  Events,
-} from '../../../dist/es/index.js';
+import { Editable, Field, EditButton, Events, StringInput } from '../../../dist/es/index.js';
 
 const editable = new Editable('my-table', {
   dataSrc: {
@@ -17,15 +9,13 @@ const editable = new Editable('my-table', {
   fields: [
     new Field({
       name: 'id',
-      type: FieldType.NUM,
+      type: 'num',
     }),
     new Field({
       name: 'title',
       sortable: true,
-      type: FieldType.STRING,
-      editor: new Editor({
-        type: EditorType.STRING,
-      }),
+      type: 'string',
+      editor: new StringInput(),
     }),
   ],
   buttons: [new EditButton()],

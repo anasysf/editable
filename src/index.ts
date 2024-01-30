@@ -1,9 +1,6 @@
 export { default as Editable } from './editable';
 export { default as Field } from './field';
-export { default as Editor } from './editor';
-export { EditorType } from './editor/types/options';
-export { FieldType } from './field/types/options';
+export { default as StringInput } from './editor/input/string-input';
 export { default as EditButton } from './button/edit-button';
-export { default as BaseButton } from './button/base';
-export { ButtonTypeIconMap } from './button/types';
+export type { FieldType } from './field/types/options';
 export { Events } from './editable/types/events';

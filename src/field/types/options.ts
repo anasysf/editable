@@ -1,18 +1,13 @@
-import type { WithRequired } from '../../types';
 import type { EditorType } from '../../editor/types/options';
-import type Editor from '../../editor';
+import type BaseEditor from '../../editor/base';
 
-export enum FieldType {
-  STRING = 'string',
-  NUM = 'num',
-  HTML = 'html',
-}
+export type FieldType = 'string' | 'num' | 'html';
 
 /**
  * The field options.
  * @typeParam T - The field type.
  */
-export interface Options<T extends FieldType, E extends EditorType> {
+export interface Options<T extends FieldType, E extends keyof EditorType> {
   /** The name of the field. */
   readonly name: string;
 
@@ -25,14 +20,17 @@ export interface Options<T extends FieldType, E extends EditorType> {
   /** Whether the field is visible or not. */
   readonly visible?: boolean;
 
-  readonly editor?: Editor<E>;
+  readonly editor?: BaseEditor<E>;
 }
+
+export type RequiredOptions = 'visible' | 'sortable';
 
 /**
  * The final field options.
  * @typeParam T - The type of the field.
  */
-export type NormalizedOptions<T extends FieldType, E extends EditorType> = WithRequired<
+export type NormalizedOptions<T extends FieldType, E extends keyof EditorType> = Exclude<
   Options<T, E>,
-  'sortable' | 'visible'
->;
+  RequiredOptions
+> &
+  Required<Pick<Options<T, E>, RequiredOptions>>;

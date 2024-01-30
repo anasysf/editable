@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
-    "target": "ES2021",
     "checkJs": true,
     "allowJs": true,
-    "moduleResolution": "bundler",
+    "pretty": true,
+  },
+  "typeAcquisition": {
+    "enable": true,
   },
 }

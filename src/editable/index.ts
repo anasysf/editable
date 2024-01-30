@@ -9,7 +9,6 @@ import { validateTableElement } from './utils/validation';
 import type Field from '../field';
 import type { FieldType } from '../field/types/options';
 import type { EditorType } from '../editor/types/options';
-import type Editor from '../editor';
 import type IconButtonBase from '../button/base';
 import { ButtonTypeIconMap } from '../button/types';
 import { isEditableOptions } from './utils/type-guard';
@@ -152,12 +151,8 @@ export default class Editable<
    *
    * @returns An array of the fields.
    */
-  public get fields(): Field<FieldType, EditorType>[] {
+  public get fields(): Field<FieldType, keyof EditorType>[] {
     return this.options.fields;
-  }
-
-  public get editors(): (Editor<EditorType> | undefined)[] {
-    return this.fields.map((field) => field.editor);
   }
 
   public get buttons(): IconButtonBase<ButtonTypeIconMap>[] | undefined {
@@ -200,12 +195,6 @@ export default class Editable<
       else return this.updateDataSrc?.prop ?? 'result.content';
   }
 
-  /* private get editorsMap(): Map<string, Editor<EditorType> | undefined> {
-    return new Map(
-      Array.from(this.fieldsMap.entries()).map(([name, field]) => [name, field.editor]),
-    );
-  } */
-
   /**
    * Get the Editable instance's fields as a Map.
    *
@@ -214,8 +203,8 @@ export default class Editable<
    *
    * @returns A Map of the fields.
    */
-  private get fieldsMap(): Map<string, Field<FieldType, EditorType>> {
-    return new Map(this.fields.map((field) => [field.name, field]));
+  private get fieldsMap(): Map<string, Field<FieldType, keyof EditorType>> {
+    return new Map(this.fields.map((field) => [field.options.name, field]));
   }
 
   /**
@@ -228,9 +217,9 @@ export default class Editable<
   private fieldsMapToColumns(): ConfigColumns[] {
     return Array.from(this.fieldsMap.entries()).map<ConfigColumns>(([name, field]) => ({
       name,
-      type: field.type,
-      sortable: field.sortable,
-      visible: field.visible,
+      type: field.options.type,
+      sortable: field.options.sortable,
+      visible: field.options.visible,
       data: name,
     }));
   }

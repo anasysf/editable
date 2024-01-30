@@ -84,10 +84,11 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
 
     const elements: HTMLElementsWithValue[] = [];
     for (const field of fields) {
-      const editor = field.editor;
+      const fieldOpts = field.options;
+      const editor = fieldOpts.editor;
       if (!editor) continue;
 
-      const fieldName = field.name as keyof TData;
+      const fieldName = fieldOpts.name as keyof TData;
       if (!(fieldName in rowData)) continue;
 
       const element = editor.generateHTML(

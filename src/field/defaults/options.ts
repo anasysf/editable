@@ -1,4 +1,4 @@
-import type { NormalizedOptions, Options, FieldType } from '../types/options';
+import type { NormalizedOptions, Options, FieldType, RequiredOptions } from '../types/options';
 import type { EditorType } from '../../editor/types/options';
 
 /**
@@ -10,19 +10,13 @@ import type { EditorType } from '../../editor/types/options';
  *
  * @returns The default options.
  */
-export function defaultOptions<T extends FieldType, E extends EditorType>(
+export function defaultOptions<T extends FieldType, E extends keyof EditorType>(
   options: Options<T, E>,
 ): NormalizedOptions<T, E> {
-  const name = options.name;
-  const type = options.type;
-  const sortable = options.sortable ?? (true as const);
-  const visible = options.visible ?? (true as const);
+  const defaultOpts = {
+    sortable: options.sortable ?? true,
+    visible: options.visible ?? true,
+  } satisfies Pick<Options<T, E>, RequiredOptions>;
 
-  return {
-    ...options,
-    name,
-    type,
-    sortable,
-    visible,
-  };
+  return { ...defaultOpts, ...options };
 }

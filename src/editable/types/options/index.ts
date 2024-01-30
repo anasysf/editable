@@ -17,7 +17,7 @@ export interface OptionsBASE<E extends boolean | undefined> {
    */
   readonly dataSrc: DataSrc<DataSrcMethod>;
 
-  readonly fields: Field<FieldType, EditorType>[];
+  readonly fields: Field<FieldType, keyof EditorType>[];
 
   readonly buttons?: IconButtonBase<ButtonTypeIconMap>[];
 

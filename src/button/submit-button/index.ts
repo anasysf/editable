@@ -22,18 +22,6 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     this._options = opts;
   }
 
-  public get options(): NormalizedOptions {
-    return this._options;
-  }
-
-  public get color(): HTMLSpanElement['className'] {
-    return this.options.color;
-  }
-
-  public get className(): HTMLSpanElement['className'] {
-    return this.color;
-  }
-
   public generateHTML<TData extends Record<string, JSONValue>>(
     row: ApiRowMethods<TData>,
     editable: Editable<TData, boolean>,
@@ -48,7 +36,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     const element = new Icon({
       id: `submit-row-${rowIdx}-btn`,
       name: 'submit-row-btn',
-      className: this.className,
+      className: this._options.color,
       icon,
     });
 
@@ -99,10 +87,11 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     const invalidElements: HTMLElementsWithValue[] = [];
 
     for (const [idx, field] of fields.entries()) {
-      const editor = field.editor;
+      const fieldOpts = field.options;
+      const editor = fieldOpts.editor;
       if (!editor) continue;
 
-      const fieldName = field.name as keyof TData;
+      const fieldName = fieldOpts.name as keyof TData;
       if (!(fieldName in rowData)) continue;
 
       const td = tds.item(idx);
@@ -111,15 +100,15 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       const element = td.firstElementChild;
       if (!element || !isHTMLElementsWithValue(element)) continue;
 
-      editor.value = element.value;
-      if (!editor.validate()) {
+      editor.element.value = element.value;
+      if (!editor.element.checkValidity()) {
         console.error(element.validationMessage, element.validity);
         invalidElements.push(element);
         continue;
       }
 
-      formData[fieldName as Extract<TData, keyof TData>] = editor.value;
-      rowData[fieldName] = editor.value as TData[typeof fieldName];
+      formData[fieldName as Extract<TData, keyof TData>] = editor.element.value;
+      rowData[fieldName] = editor.element.value as TData[typeof fieldName];
     }
 
     if (invalidElements.length !== 0) return;

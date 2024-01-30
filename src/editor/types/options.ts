@@ -1,12 +1,14 @@
-import type { WithRequired, HTMLElementsWithValue, HTMLInputs } from '../../types';
+import type { HTMLElementsWithValue, HTMLInputs } from '../../types';
 
-export enum EditorType {
-  STRING = 'string',
-  TEXT = 'text',
-  NUMBER = 'number',
+// type EditorTypes = 'string' | 'number' | 'text';
+
+export interface EditorType {
+  readonly string: HTMLInputElement;
+  readonly number: HTMLInputElement;
+  readonly text: HTMLTextAreaElement;
 }
 
-export type StringEditorType = Extract<EditorType, EditorType.STRING | EditorType.TEXT>;
+/* export type StringEditorType = Extract<EditorType, EditorType.STRING | EditorType.TEXT>;
 export type NumberEditorType = Extract<EditorType, EditorType.NUMBER>;
 
 interface OptionsBASE<T extends EditorType> {
@@ -37,4 +39,11 @@ export type Options<T extends EditorType> =
 export type NormalizedOptions<T extends EditorType> = WithRequired<
   OptionsBASE<T>,
   'required' | 'readonly' | 'disabled'
->;
+>; */
+
+export interface OptionsBASE {
+  readonly className?: HTMLElementsWithValue['className'];
+  readonly required?: HTMLElementsWithValue['required'];
+  readonly readonly?: HTMLInputs['readOnly'];
+  readonly disabled?: HTMLElementsWithValue['disabled'];
+}
