@@ -7,6 +7,7 @@ import type { JSONValue } from '../../types';
 import type Editable from '../../editable';
 import { ButtonTypeIconMap } from '../types';
 import HTTP from '../../utils/http';
+import { Events } from '../../editable/types/events';
 
 export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELETE> {
   private readonly _options: NormalizedOptions;
@@ -52,12 +53,22 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     return element.generateHTML();
   }
 
-  public async onClick<TData extends Record<string, JSONValue>>(
+  private deleteCB<TData extends Record<string, JSONValue>>(
+    deleteConfirmed: boolean,
+    row: ApiRowMethods<TData>,
+  ): boolean {
+    if (!deleteConfirmed) return deleteConfirmed;
+
+    row.remove().draw(false);
+    return deleteConfirmed;
+  }
+
+  public onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
     _oldRowData: TData,
     editable: Editable<TData, boolean>,
-  ): Promise<void> {
+  ): void {
     const target = evt.target;
     if (!target || target instanceof HTMLTableCellElement) return;
 
@@ -72,7 +83,6 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     }
 
     const rowId = row.id();
-    console.log(rowId, row.node());
     const rowIdKey = editable.options.rowId;
 
     if (!rowIdKey) throw new ReferenceError('Please set a `rowId`.');
@@ -93,9 +103,12 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
 
     const http = new HTTP(deleteDataSrcSource);
     try {
-      await http.delete(rowIdMap, undefined, deleteDataSrcMethod, deleteDataSrcFormat);
-
-      row.remove().draw(false);
+      editable.emit(Events.DELETE, {
+        deleteCB: async (deleteConfirmed: boolean): Promise<boolean> => {
+          await http.delete(rowIdMap, undefined, deleteDataSrcMethod, deleteDataSrcFormat);
+          return this.deleteCB(deleteConfirmed, row);
+        },
+      });
     } catch (err) {
       console.error(err);
     }

@@ -256,14 +256,17 @@ export default class Editable<
 
         return button.generateHTML(this.dataTable.row(row), this).outerHTML;
       },
-      createdCell: (cell, _cd, _rd): void => {
+      createdCell: (cell): void => {
         (cell as HTMLTableCellElement).addEventListener('click', (evt): void => {
-          button.onClick(
-            evt,
-            this.dataTable.row((cell as HTMLTableCellElement).id),
-            this.dataTable.row((cell as HTMLTableCellElement).id).data(),
-            this,
-          );
+          const tr = (cell as HTMLTableCellElement).closest('tr');
+          if (!tr)
+            throw new Error(
+              'Could not find the closest row to this cell this is a bug, REPORT IMMEDIATLY.',
+            );
+
+          const row = this.dataTable.row(`#${tr.id}`);
+
+          button.onClick(evt, row, row.data(), this);
         });
       },
     }));

@@ -1,8 +1,8 @@
 {
   "name": "editable",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "description": "",
-  "main": "dist/iife/editable.bundle.min.js",
+  "main": "dist/es/index.js",
   "module": "dist/es/index.js",
   "type": "module",
   "files": [
@@ -14,7 +14,7 @@
     "lint": "eslint --ext .ts src/",
     "lint:fix": "eslint --ext .ts src/ --fix",
     "rollup:dev": "rollup -c",
-    "rollup:prod": "rollup -c --environment NODE_ENV:production",
+    "rollup:prod": "NODE_ENV=production rollup -c",
     "build:dev": "pnpm format && pnpm lint:fix && pnpm clean && pnpm rollup:dev",
     "build:prod": "pnpm format && pnpm lint:fix && pnpm clean && pnpm rollup:prod",
     "doc": "typedoc",

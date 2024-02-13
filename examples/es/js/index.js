@@ -33,6 +33,11 @@ const editable = new Editable('my-table', {
   deleteDataSrc: 'https://dummyjson.com/products/1',
 });
 
-editable.on(Events.UPDATED, ({ test }) => console.log(test));
+editable
+  .on(Events.UPDATED, ({ test }) => console.log(test))
+  .on(Events.DELETE, ({ deleteCB }) => {
+    alert('aaaaaaaaaaa');
+    deleteCB(true);
+  });
 
 console.log(editable);
