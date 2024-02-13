@@ -26,7 +26,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     row: ApiRowMethods<TData>,
     editable: Editable<TData, boolean>,
   ): HTMLSpanElement {
-    const rowIdx = row.index();
+    const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
     const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
     if (!icon)
       throw new ReferenceError(
@@ -34,7 +34,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       );
 
     const element = new Icon({
-      id: `submit-row-${rowIdx}-btn`,
+      id: `submit-row-${rowId}-btn`,
       name: 'submit-row-btn',
       className: this._options.color,
       icon,
@@ -46,6 +46,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
   public async onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
+    _oldRowData: TData,
     editable: Editable<TData, boolean>,
   ): Promise<void> {
     const target = evt.target;
@@ -101,7 +102,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       if (!element || !isHTMLElementsWithValue(element)) continue;
 
       editor.element.value = element.value;
-      if (!editor.element.checkValidity()) {
+      if (!editor.validateElement()) {
         console.error(element.validationMessage, element.validity);
         invalidElements.push(element);
         continue;

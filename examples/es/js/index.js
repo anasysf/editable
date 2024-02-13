@@ -1,4 +1,11 @@
-import { Editable, Field, EditButton, Events, StringInput } from '../../../dist/es/index.js';
+import {
+  Editable,
+  Field,
+  EditButton,
+  Events,
+  StringInput,
+  DeleteButton,
+} from '../../../dist/es/index.js';
 
 const editable = new Editable('my-table', {
   dataSrc: {
@@ -18,10 +25,12 @@ const editable = new Editable('my-table', {
       editor: new StringInput(),
     }),
   ],
-  buttons: [new EditButton()],
+  buttons: [new EditButton(), new DeleteButton()],
   updateDataSrc: {
     src: 'https://dummyjson.com/products/1',
   },
+  rowId: 'id',
+  deleteDataSrc: 'https://dummyjson.com/products/1',
 });
 
 editable.on(Events.UPDATED, ({ test }) => console.log(test));

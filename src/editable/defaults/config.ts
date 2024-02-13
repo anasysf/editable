@@ -11,6 +11,7 @@ import { isIDataSrcPost, isDataSrcString } from '../utils/type-guard';
  */
 export function defaultConfig(options: Options<boolean>, columns: ConfigColumns[]): Config {
   const dataSrc = options.dataSrc;
+  const rowId = options.rowId;
 
   return {
     ajax: {
@@ -29,5 +30,6 @@ export function defaultConfig(options: Options<boolean>, columns: ConfigColumns[
         : undefined,
     },
     columns,
+    rowId,
   };
 }

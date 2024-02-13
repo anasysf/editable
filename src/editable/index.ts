@@ -16,6 +16,7 @@ import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateD
 import { isString } from '../utils/type-guard';
 import EventEmitter from '../utils/event-emitter';
 import type { EventMap } from './types/events';
+import type { DeleteDataSrc, DeleteDataSrcMethod } from './types/options/deleteDataSrc';
 
 /**
  * Class representing the Editable instance.
@@ -195,6 +196,22 @@ export default class Editable<
       else return this.updateDataSrc?.prop ?? 'result.content';
   }
 
+  public get deleteDataSrc(): DeleteDataSrc | undefined {
+    return this.options.deleteDataSrc;
+  }
+
+  public get deleteDataSrcSource(): string | undefined {
+    return isString(this.deleteDataSrc) ? this.deleteDataSrc : this.deleteDataSrc?.src;
+  }
+
+  public get deleteDataSrcMethod(): DeleteDataSrcMethod | undefined {
+    return isString(this.deleteDataSrc) ? 'DELETE' : this.deleteDataSrc?.method ?? 'DELETE';
+  }
+
+  public get deleteDataSrcFormat(): HTTPRequestFormat | undefined {
+    return isString(this.deleteDataSrc) ? 'json' : this.deleteDataSrc?.format ?? 'json';
+  }
+
   /**
    * Get the Editable instance's fields as a Map.
    *
@@ -239,9 +256,14 @@ export default class Editable<
 
         return button.generateHTML(this.dataTable.row(row), this).outerHTML;
       },
-      createdCell: (cell, _cd, _rd, rowIndex): void => {
+      createdCell: (cell, _cd, _rd): void => {
         (cell as HTMLTableCellElement).addEventListener('click', (evt): void => {
-          button.onClick(evt, this.dataTable.row(rowIndex), this);
+          button.onClick(
+            evt,
+            this.dataTable.row((cell as HTMLTableCellElement).id),
+            this.dataTable.row((cell as HTMLTableCellElement).id).data(),
+            this,
+          );
         });
       },
     }));

@@ -27,6 +27,7 @@ export default abstract class IconButtonBase<T extends ButtonTypeIconMap> {
   public abstract onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
+    oldRowData: TData,
     editable: Editable<TData, boolean | undefined>,
   ): void;
 }

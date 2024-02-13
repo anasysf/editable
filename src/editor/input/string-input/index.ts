@@ -18,10 +18,10 @@ export default class StringInput extends BaseEditor<'string'> {
     rowIdx: number,
     defaultValue: HTMLInputElement['value'],
   ): HTMLInputElement {
-    const input = super.element;
+    const input = this.element;
     const options = this._options;
 
-    input.type = super.type;
+    input.type = this.type;
     input.id = `edit-${fieldName}-inp-${rowIdx}`;
     input.name = 'edit-row-inp';
     input.className = options.className ?? 'form-control form-control-sm';
@@ -34,6 +34,6 @@ export default class StringInput extends BaseEditor<'string'> {
     input.placeholder = fieldName;
     input.defaultValue = defaultValue;
 
-    return this._fragment.appendChild(input);
+    return this.fragment.appendChild(input);
   }
 }

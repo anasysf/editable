@@ -1,3 +1,4 @@
+import type { DeleteDataSrcMethod } from '../../editable/types/options/deleteDataSrc';
 import type { UpdateDataSrcMethod } from '../../editable/types/options/updateDataSrc';
 import type { HTTPRequestFormat, JSONValue } from '../../types';
 
@@ -19,6 +20,22 @@ export function defaultUpdateInit<B extends Record<PropertyKey, JSONValue>>(
   body: B,
   init?: RequestInit,
   method: UpdateDataSrcMethod = 'PUT',
+  format: HTTPRequestFormat = 'json',
+): RequestInit {
+  return {
+    method,
+    body: defaultBody(body, format),
+    headers: {
+      'Content-Type': format === 'json' ? 'application/json' : 'application/form-data',
+    },
+    ...init,
+  };
+}
+
+export function defaultDeleteInit<B extends Record<PropertyKey, JSONValue>>(
+  body: B,
+  init?: RequestInit,
+  method: DeleteDataSrcMethod = 'DELETE',
   format: HTTPRequestFormat = 'json',
 ): RequestInit {
   return {

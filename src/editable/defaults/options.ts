@@ -40,6 +40,7 @@ function defaultIconMap(iconMap?: IconMap): Required<IconMap> {
       'edit-row': 'fa-regular fa-pen-to-square',
       'submit-row': 'fa-solid fa-check',
       'delete-row': 'fa-regular fa-trash-can',
+      'cancel-row': 'fa-solid fa-xmark',
       ...iconMap?.fa,
     },
   };
@@ -72,6 +73,8 @@ export function defaultOptions<E extends boolean | undefined>(
   const iconSrc = options.iconSrc ?? ('fa' as IconSrc);
   const iconMap = defaultIconMap(options.iconMap);
   const updateDataSrc = isEditableOptions(options) && options.updateDataSrc;
+  const deleteDataSrc = options.deleteDataSrc;
+  const rowId = options.rowId;
 
   return {
     buttons,
@@ -80,6 +83,8 @@ export function defaultOptions<E extends boolean | undefined>(
     fields,
     iconMap,
     iconSrc,
+    rowId,
+    deleteDataSrc,
     ...(updateDataSrc && { updateDataSrc: defaultUpdateDataSrc(updateDataSrc) }),
   } as NormalizedOptions<E>;
 }

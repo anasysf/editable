@@ -24,8 +24,8 @@ export default defineConfig({
       format: 'iife',
       sourcemap: !production ? 'inline' : 'hidden',
       name: 'ed',
-      exports: 'named',
       globals: {
+        jquery: '$',
         'datatables.net-bs5': 'DataTable',
       },
       plugins: [
@@ -41,21 +41,15 @@ export default defineConfig({
   ],
   external: ['jquery', 'datatables.net-bs5'],
   plugins: [
-    /* production &&
-      terser({
-        ecma: 2020,
-        compress: true,
-        mangle: true,
-        maxWorkers: 4,
-      }), */
-    externalGlobals({
-      'datatables.net-bs5': 'DataTable',
-    }),
     nodeResolve({
       browser: true,
       extensions: ['.ts', '.js'],
     }),
     commonjs(),
+    externalGlobals({
+      jquery: '$',
+      'datatables.net-bs5': 'DataTable',
+    }),
     typescript({
       tsconfig: './tsconfig.build.json',
     }),

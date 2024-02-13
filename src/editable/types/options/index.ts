@@ -7,6 +7,7 @@ import type { ButtonTypeIconMap } from '../../../button/types';
 import type { DataSrc, DataSrcMethod } from './dataSrc';
 import type { UpdateDataSrc } from './updateDataSrc';
 import type { IconMap, IconSrc } from './iconMap';
+import type { DeleteDataSrc } from './deleteDataSrc';
 
 export interface OptionsBASE<E extends boolean | undefined> {
   readonly editable?: E;
@@ -24,6 +25,10 @@ export interface OptionsBASE<E extends boolean | undefined> {
   readonly iconSrc?: IconSrc;
 
   readonly iconMap?: IconMap;
+
+  readonly rowId?: string;
+
+  readonly deleteDataSrc?: DeleteDataSrc;
 }
 
 export type EditableOptions = OptionsBASE<true> & {

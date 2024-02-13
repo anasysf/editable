@@ -5,10 +5,11 @@ import { defaultOptions } from './defaults/options';
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type { JSONValue } from '../../types';
 import type { HTMLElementsWithValue } from '../../types';
-import { replaceEditIcon } from '../../editable/utils';
+import { replaceDeleteIcon, replaceEditIcon } from '../../editable/utils';
 import type Editable from '../../editable';
 import { ButtonTypeIconMap } from '../types';
 import SubmitButton from '../submit-button';
+import CancelButton from '../cancel-button';
 
 export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
   private readonly _options: NormalizedOptions;
@@ -37,7 +38,7 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
     row: ApiRowMethods<TData>,
     editable: Editable<TData, boolean>,
   ): HTMLSpanElement {
-    const rowIdx = row.index();
+    const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
     const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
     if (!icon)
       throw new ReferenceError(
@@ -45,7 +46,7 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
       );
 
     const element = new Icon({
-      id: `edit-row-${rowIdx}-btn`,
+      id: `edit-row-${rowId}-btn`,
       name: 'edit-row-btn',
       className: this.className,
       icon,
@@ -57,6 +58,7 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
   public onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
+    _oldRowData: TData,
     editable: Editable<TData, boolean>,
   ): void {
     const target = evt.target;
@@ -69,6 +71,7 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
     }
 
     const rowData = row.data();
+    const oldRowData = structuredClone(rowData);
     const rowIdx = row.index();
     const fields = editable.fields;
 
@@ -80,6 +83,13 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
     if (!submitIcon)
       throw new ReferenceError(
         `Please set a 'submit-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
+      );
+
+    const cancelButton = new CancelButton();
+    const cancelIcon = cancelButton.getIconByType(iconSrc, iconMap);
+    if (!cancelIcon)
+      throw new ReferenceError(
+        `Please set a 'cancel-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
       );
 
     const elements: HTMLElementsWithValue[] = [];
@@ -103,9 +113,15 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
 
     if (elements.length !== 0) {
       row.data(rowData).draw(false);
+
       const submitBtn = replaceEditIcon(row, editable, submitButton);
       submitBtn.addEventListener('click', (evt): void => {
-        void submitButton.onClick(evt, row, editable);
+        void submitButton.onClick(evt, row, oldRowData, editable);
+      });
+
+      const cancelBtn = replaceDeleteIcon(row, editable, cancelButton);
+      cancelBtn.addEventListener('click', (evt): void => {
+        cancelButton.onClick(evt, row, oldRowData, editable);
       });
     }
   }
