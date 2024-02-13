@@ -3,7 +3,7 @@ stages:
 
 variables:
   # Customize these variables as needed
-  NODE_IMAGE: 'node:21'
+  NODE_IMAGE: 'node:16'
 
 before_script:
   - apt-get update -qy
