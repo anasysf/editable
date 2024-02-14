@@ -2,7 +2,7 @@
   "name": "editable",
   "version": "0.1.5",
   "description": "",
-  "main": "dist/es/index.js",
+  "main": "dist/iife/editable.min.js",
   "module": "dist/es/index.js",
   "type": "module",
   "files": [

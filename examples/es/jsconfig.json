@@ -2,9 +2,9 @@
   "compilerOptions": {
     "checkJs": true,
     "allowJs": true,
-    "pretty": true,
+    "pretty": true
   },
   "typeAcquisition": {
-    "enable": true,
-  },
+    "enable": true
+  }
 }
