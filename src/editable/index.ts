@@ -1,22 +1,22 @@
 import type { Api, Config, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
-import type { HTTPRequestFormat, JSONValue, TableID } from '../types';
-import type { NormalizedOptions, Options } from './types/options';
-import type { IconMap, IconSrc } from './types/options/iconMap';
-import { defaultOptions } from './defaults/options';
-import { defaultConfig } from './defaults/config';
-import { validateTableElement } from './utils/validation';
-import type Field from '../field';
-import type { FieldType } from '../field/types/options';
-import type { EditorType } from '../editor/types/options';
 import type IconButtonBase from '../button/base';
 import { ButtonTypeIconMap } from '../button/types';
-import { isEditableOptions } from './utils/type-guard';
-import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateDataSrc';
-import { isString } from '../utils/type-guard';
+import type { EditorType } from '../editor/types/options';
+import type Field from '../field';
+import type { FieldType } from '../field/types/options';
+import type { HTTPRequestFormat, JSONValue, TableID } from '../types';
 import EventEmitter from '../utils/event-emitter';
+import { isString } from '../utils/type-guard';
+import { defaultConfig } from './defaults/config';
+import { defaultOptions } from './defaults/options';
 import type { EventMap } from './types/events';
+import type { NormalizedOptions, Options } from './types/options';
 import type { DeleteDataSrc, DeleteDataSrcMethod } from './types/options/deleteDataSrc';
+import type { IconMap, IconSrc } from './types/options/iconMap';
+import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateDataSrc';
+import { isEditableOptions } from './utils/type-guard';
+import { validateTableElement } from './utils/validation';
 
 /**
  * Class representing the Editable instance.
@@ -26,41 +26,23 @@ export default class Editable<
   TData extends Record<string, JSONValue>,
   E extends boolean | undefined = true,
 > extends EventEmitter<EventMap> {
-  /**
-   * The HTML Table element ID.
-   *
-   * @internal
-   */
-  private readonly _tableId: TableID;
+  /** The HTML Table element ID. */
+  public readonly tableId: TableID;
 
-  /**
-   * The HTML Table element.
-   *
-   * @internal
-   */
-  private readonly _table: HTMLTableElement;
+  /** The HTML Table element. */
+  public readonly table: HTMLTableElement;
 
-  /**
-   * The Editable instance options.
-   *
-   * @internal
-   */
-  private readonly _options: NormalizedOptions<E>;
+  /** The Editable instance options. */
+  public readonly options: NormalizedOptions<E>;
 
-  /**
-   * The DataTable instance config.
-   *
-   * @internal
-   */
-  private readonly _config: Config;
+  /** The DataTable instance config. */
+  public readonly config: Config;
 
   /**
    * The DataTable instance.
    * @typeParam TData - The data type.
-   *
-   * @internal
    */
-  private readonly _dataTable: Api<TData>;
+  public readonly dataTable: Api<TData>;
 
   /**
    * Create a new Editable instance.
@@ -77,13 +59,13 @@ export default class Editable<
     super();
 
     // Set the tableId.
-    this._tableId = tableId;
+    this.tableId = tableId;
 
     // Set the table element.
-    this._table = table;
+    this.table = table;
 
     // Set the options.
-    this._options = opts;
+    this.options = opts;
 
     // Generate the columns based on the fields passed in the options.
     const columns = this.generateConfigColumns();
@@ -92,55 +74,10 @@ export default class Editable<
     const config = defaultConfig(options, columns);
 
     // Set the config.
-    this._config = config;
+    this.config = config;
 
     // Initiate the DataTables instance.
-    this._dataTable = this.initDT(this.table, this.config);
-  }
-
-  /**
-   * The table ID passed to the Editable constructor parameter.
-   *
-   * @returns The HTML Table ID.
-   */
-  public get tableId(): TableID {
-    return this._tableId;
-  }
-
-  /**
-   * Get the Table element associated with the Editable instance.
-   *
-   * @returns The HTML Table element.
-   */
-  public get table(): HTMLTableElement {
-    return this._table;
-  }
-
-  /**
-   * Get the Editable instance's options.
-   *
-   * @returns The Editable instance's options.
-   */
-  public get options(): NormalizedOptions<boolean> {
-    return this._options;
-  }
-
-  /**
-   * Get the DataTable instance's config.
-   *
-   * @returns The DataTable instance's config.
-   */
-  public get config(): Config {
-    return this._config;
-  }
-
-  /**
-   * Get the DataTable instance.
-   *
-   * @returns The DataTable instance.
-   */
-  public get dataTable(): Api<TData> {
-    return this._dataTable;
+    this.dataTable = this.initDT(this.table, this.config);
   }
 
   public get isEditable(): boolean {

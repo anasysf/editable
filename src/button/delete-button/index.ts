@@ -53,16 +53,6 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     return element.generateHTML();
   }
 
-  private deleteCB<TData extends Record<string, JSONValue>>(
-    deleteConfirmed: boolean,
-    row: ApiRowMethods<TData>,
-  ): boolean {
-    if (!deleteConfirmed) return deleteConfirmed;
-
-    row.remove().draw(false);
-    return deleteConfirmed;
-  }
-
   public onClick<TData extends Record<string, JSONValue>>(
     evt: MouseEvent,
     row: ApiRowMethods<TData>,
@@ -102,15 +92,19 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     const deleteDataSrcFormat = editable.deleteDataSrcFormat ?? 'json';
 
     const http = new HTTP(deleteDataSrcSource);
-    try {
-      editable.emit(Events.DELETE, {
-        deleteCB: async (deleteConfirmed: boolean): Promise<boolean> => {
+
+    editable.emit(Events.DELETE, {
+      deleteRow: async (confirmDelete: boolean = true): Promise<void> => {
+        if (!confirmDelete) return;
+
+        try {
           await http.delete(rowIdMap, undefined, deleteDataSrcMethod, deleteDataSrcFormat);
-          return this.deleteCB(deleteConfirmed, row);
-        },
-      });
-    } catch (err) {
-      console.error(err);
-    }
+          row.remove().draw(false);
+          return;
+        } catch (err) {
+          console.error(err);
+        }
+      },
+    });
   }
 }

@@ -35,9 +35,6 @@ const editable = new Editable('my-table', {
 
 editable
   .on(Events.UPDATED, ({ test }) => console.log(test))
-  .on(Events.DELETE, ({ deleteCB }) => {
-    alert('aaaaaaaaaaa');
-    deleteCB(true);
-  });
+  .on(Events.DELETE, ({ deleteRow }) => deleteRow(false));
 
 console.log(editable);

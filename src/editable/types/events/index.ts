@@ -5,7 +5,7 @@ export enum Events {
 
 /* eslint-disable-next-line */
 type DeleteEvent = {
-  readonly deleteCB: (deleteConfirmed: boolean) => Promise<boolean>;
+  readonly deleteRow: (confirmDelete?: boolean) => Promise<void>;
 };
 
 export interface EventMap {
