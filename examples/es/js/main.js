@@ -15,22 +15,22 @@ const editable = new Editable('my-table', {
     prop: 'products',
   },
   fields: [
-    new Field({
+    /* new Field({
       name: 'id',
       type: 'num',
-    }),
+    }), */
     new Field({
       name: 'title',
       type: 'string',
       editor: new StringInput(),
     }),
-    new Field({
+    /* new Field({
       name: 'stock',
       editor: new Checkbox({
         activeLabel: 'yessiir',
         inactiveLabel: 'nosir',
       }),
-    }),
+    }), */
   ],
   buttons: [new EditButton(), new DeleteButton()],
   updateDataSrc: {
@@ -42,6 +42,7 @@ const editable = new Editable('my-table', {
 
 editable
   .on(Events.UPDATED, ({ test }) => console.log(test))
-  .on(Events.DELETE, ({ deleteRow }) => deleteRow(true));
+  .on(Events.DELETE, ({ deleteRow }) => deleteRow(true)
+  );
 
 console.log(editable);

@@ -83,6 +83,15 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
 
     const tds = tr.cells;
 
+    const rowId = row.id();
+    const rowIdKey = editable.options.rowId;
+
+    if (!rowIdKey) throw new ReferenceError('Please set a `rowId`.');
+
+    const rowIdMap = {
+      [rowIdKey]: rowId,
+    };
+
     const rowData = row.data();
     const fields = editable.fields;
 
@@ -97,7 +106,7 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     const formData: Record<
       Extract<TData, keyof TData>,
       Exclude<JSONValue, JSONArray | JSONObject | null>
-    > = {} as Record<
+    > = rowIdMap as Record<
       Extract<TData, keyof TData>,
       Exclude<JSONValue, JSONArray | JSONObject | null>
     >;
