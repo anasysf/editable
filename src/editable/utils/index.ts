@@ -1,9 +1,9 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '..';
+import type CancelButton from '../../button/cancel-button';
 import type SubmitButton from '../../button/submit-button';
 import type { JSONValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
-import type CancelButton from '../../button/cancel-button';
 
 export function replaceEditIcon<TData extends Record<string, JSONValue>>(
   row: ApiRowMethods<TData>,
@@ -14,11 +14,9 @@ export function replaceEditIcon<TData extends Record<string, JSONValue>>(
 
   const editIconID = `edit-row-${rowId}-btn`;
   const editIcon = document.getElementById(editIconID);
-  if (!editIcon)
-    throw new ReferenceError(`Could not find an edit icon with the id: ${editIconID}.`);
 
   const submitIcon = submitButton.generateHTML(row, editable);
-  editIcon.replaceWith(submitIcon);
+  editIcon?.replaceWith(submitIcon);
 
   return submitIcon;
 }
@@ -32,11 +30,9 @@ export function replaceDeleteIcon<TData extends Record<string, JSONValue>>(
 
   const deleteIconID = `delete-row-${rowId}-btn`;
   const deleteIcon = document.getElementById(deleteIconID);
-  if (!deleteIcon)
-    throw new ReferenceError(`Could not find a delete icon with the id: ${deleteIconID}.`);
 
   const cancelIcon = cancelButton.generateHTML(row, editable);
-  deleteIcon.replaceWith(cancelIcon);
+  deleteIcon?.replaceWith(cancelIcon);
 
   return cancelIcon;
 }

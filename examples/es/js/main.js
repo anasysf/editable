@@ -1,10 +1,11 @@
 import {
-  Editable,
-  Field,
-  EditButton,
-  Events,
-  StringInput,
+  Checkbox,
   DeleteButton,
+  EditButton,
+  Editable,
+  Events,
+  Field,
+  StringInput,
 } from '../../../dist/es/index.js';
 
 const editable = new Editable('my-table', {
@@ -20,9 +21,15 @@ const editable = new Editable('my-table', {
     }),
     new Field({
       name: 'title',
-      sortable: true,
       type: 'string',
       editor: new StringInput(),
+    }),
+    new Field({
+      name: 'stock',
+      editor: new Checkbox({
+        activeLabel: 'yessiir',
+        inactiveLabel: 'nosir',
+      }),
     }),
   ],
   buttons: [new EditButton(), new DeleteButton()],
@@ -35,6 +42,6 @@ const editable = new Editable('my-table', {
 
 editable
   .on(Events.UPDATED, ({ test }) => console.log(test))
-  .on(Events.DELETE, ({ deleteRow }) => deleteRow(false));
+  .on(Events.DELETE, ({ deleteRow }) => deleteRow(true));
 
 console.log(editable);

@@ -1,15 +1,14 @@
-import IconButtonBase from '../base';
-import type { Options, NormalizedOptions } from './types/options';
-import Icon from '../../utils/html-elements/icon';
-import { defaultOptions } from './defaults/options';
 import type { ApiRowMethods } from 'datatables.net-bs5';
-import type { JSONArray, JSONObject, JSONValue } from '../../types';
-import type { HTMLElementsWithValue } from '../../types';
 import type Editable from '../../editable';
-import { ButtonTypeIconMap } from '../types';
-import { isHTMLElementsWithValue } from '../../editor/utils/type-guard';
-import HTTP from '../../utils/http';
 import { Events } from '../../editable/types/events';
+import { isHTMLElementsWithValue } from '../../editor/utils/type-guard';
+import type { HTMLElementsWithValue, JSONArray, JSONObject, JSONValue } from '../../types';
+import Icon from '../../utils/html-elements/icon';
+import HTTP from '../../utils/http';
+import IconButtonBase from '../base';
+import { ButtonTypeIconMap } from '../types';
+import { defaultOptions } from './defaults/options';
+import type { NormalizedOptions, Options } from './types/options';
 
 export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMIT> {
   private readonly _options: NormalizedOptions;
@@ -41,6 +40,23 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     });
 
     return element.generateHTML();
+  }
+
+  private getElementValue(element: HTMLElementsWithValue): boolean | string | number {
+    if (element instanceof HTMLInputElement) {
+      switch (element.type) {
+        case 'checkbox':
+          return element.checked;
+        case 'string':
+          return element.value;
+        case 'number':
+          return element.valueAsNumber;
+        default:
+          return element.value;
+      }
+    }
+
+    return element.value;
   }
 
   public async onClick<TData extends Record<string, JSONValue>>(
@@ -101,15 +117,14 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       const element = td.firstElementChild;
       if (!element || !isHTMLElementsWithValue(element)) continue;
 
-      editor.element.value = element.value;
+      editor.setElementValue(this.getElementValue(element));
       if (!editor.validateElement()) {
-        console.error(element.validationMessage, element.validity);
         invalidElements.push(element);
         continue;
       }
 
-      formData[fieldName as Extract<TData, keyof TData>] = editor.element.value;
-      rowData[fieldName] = editor.element.value as TData[typeof fieldName];
+      formData[fieldName as Extract<TData, keyof TData>] = editor.getElementValue();
+      rowData[fieldName] = editor.getElementValue() as TData[typeof fieldName];
     }
 
     if (invalidElements.length !== 0) return;
@@ -125,11 +140,11 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
     const updateDataSrcFormat = editable.updateDataSrcFormat ?? 'json';
 
     const http = new HTTP(updateDataSrcSource);
+
     try {
       await http.update(formData, undefined, updateDataSrcMethod, updateDataSrcFormat);
 
       editable.emit(Events.UPDATED, { test: 'AAAAAAAAAAA' });
-
       row.data(rowData).draw(false);
     } catch (err) {
       console.error(err);

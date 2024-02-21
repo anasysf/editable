@@ -1,7 +1,7 @@
-import type { JSONValue } from '../types';
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../editable';
-import type { IconSrc, IconMap } from '../editable/types/options/iconMap';
+import type { IconMap, IconSrc } from '../editable/types/options/iconMap';
+import type { JSONValue } from '../types';
 import type { ButtonTypeIconMap } from './types';
 
 export default abstract class IconButtonBase<T extends ButtonTypeIconMap> {

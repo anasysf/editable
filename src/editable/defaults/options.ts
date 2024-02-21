@@ -1,14 +1,14 @@
-import type { DataSrc, DataSrcMethod } from '../types/options/dataSrc';
-import type { NormalizedOptions, Options } from '../types/options';
-import type { IconMap, IconSrc } from '../types/options/iconMap';
-import {
-  isIDataSrcGet,
-  isDataSrcString,
-  isIDataSrcPost,
-  isEditableOptions,
-} from '../utils/type-guard';
-import type { IUpdateDataSrc, UpdateDataSrc } from '../types/options/updateDataSrc';
 import { isString } from '../../utils/type-guard';
+import type { NormalizedOptions, Options } from '../types/options';
+import type { DataSrc, DataSrcMethod } from '../types/options/dataSrc';
+import type { IconMap, IconSrc } from '../types/options/iconMap';
+import type { IUpdateDataSrc, UpdateDataSrc } from '../types/options/updateDataSrc';
+import {
+  isDataSrcString,
+  isEditableOptions,
+  isIDataSrcGet,
+  isIDataSrcPost,
+} from '../utils/type-guard';
 
 function defaultDataSrc<T extends DataSrcMethod>(dataSrc: DataSrc<T>): DataSrc<T> {
   if (isIDataSrcGet(dataSrc))

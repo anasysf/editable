@@ -1,12 +1,15 @@
+import type BaseEditor from '../../editor/base';
+import Checkbox from '../../editor/input/checkbox';
+import type { EditorType } from '../../editor/types/options';
+import { exists, isObject, isString } from '../../utils/type-guard';
+import { stringNotEmpty } from '../../utils/validation';
+import type { EditableOptions, Options } from '../types/options';
 import type {
   DataSrc,
   DataSrcMethod,
-  IDataSrcPOST,
   IDataSrcGET,
+  IDataSrcPOST,
 } from '../types/options/dataSrc';
-import type { EditableOptions, Options } from '../types/options';
-import { exists, isObject, isString } from '../../utils/type-guard';
-import { stringNotEmpty } from '../../utils/validation';
 
 /**
  * Check if the dataSrc property passed is of type IDataSrc 'POST'.
@@ -61,4 +64,15 @@ export function isDataSrcString(
 
 export function isEditableOptions(options: Options<boolean>): options is EditableOptions {
   return !exists(!!options.editable) || (exists(options.editable) && options.editable);
+}
+
+export function isCheckboxEditor(
+  editor?: BaseEditor<keyof EditorType>,
+): editor is BaseEditor<'checkbox'> {
+  return (
+    !!editor &&
+    editor instanceof Checkbox &&
+    'activeLabel' in editor.options &&
+    'inactiveLabel' in editor.options
+  );
 }

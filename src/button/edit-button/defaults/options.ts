@@ -1,4 +1,4 @@
-import type { Options, NormalizedOptions } from '../types/options';
+import type { NormalizedOptions, Options } from '../types/options';
 
 export function defaultOptions(options?: Options): NormalizedOptions {
   const color = options?.color ?? 'text-primary';

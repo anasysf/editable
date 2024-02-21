@@ -19,5 +19,49 @@ export default abstract class BaseEditor<
     return this.element.checkValidity();
   }
 
-  public abstract generateHTML(fieldName: string, rowIdx: number, defaultValue: E['value']): E;
+  public abstract generateHTML(
+    fieldName: string,
+    rowIdx: number,
+    defaultValue:
+      | E['value']
+      | HTMLInputElement['defaultChecked']
+      | HTMLInputElement['valueAsNumber'],
+  ): E;
+
+  public getElementValue(): boolean | string | number {
+    if (this.element instanceof HTMLInputElement) {
+      switch (this.element.type) {
+        case 'checkbox':
+          return this.element.checked;
+        case 'string':
+          return this.element.value;
+        case 'number':
+          return this.element.valueAsNumber;
+        default:
+          return this.element.value;
+      }
+    }
+
+    return this.element.value;
+  }
+
+  public setElementValue(newValue: boolean | string | number): void {
+    if (this.element instanceof HTMLInputElement) {
+      switch (this.element.type) {
+        case 'checkbox':
+          this.element.checked = Boolean(newValue);
+          break;
+        case 'string':
+          this.element.value = String(newValue);
+          break;
+        case 'number':
+          this.element.valueAsNumber = Number(newValue);
+          break;
+        default:
+          this.element.value = String(newValue);
+      }
+    }
+
+    this.element.value = String(newValue);
+  }
 }

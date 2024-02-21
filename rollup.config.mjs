@@ -1,10 +1,10 @@
-import { defineConfig } from 'rollup';
-import terser from '@rollup/plugin-terser';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
-import pkg from './package.json' assert { type: 'json' };
+import { defineConfig } from 'rollup';
 import externalGlobals from 'rollup-plugin-external-globals';
+import pkg from './package.json' assert { type: 'json' };
 
 const production = process.env.NODE_ENV === 'production';
 console.debug(`${production ? 'PRODUCTION' : 'DEVELOPMENT'} mode bundle.`);

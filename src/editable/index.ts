@@ -2,6 +2,7 @@ import type { Api, Config, ConfigColumns } from 'datatables.net-bs5';
 import DataTable from 'datatables.net-bs5';
 import type IconButtonBase from '../button/base';
 import { ButtonTypeIconMap } from '../button/types';
+import type Checkbox from '../editor/input/checkbox';
 import type { EditorType } from '../editor/types/options';
 import type Field from '../field';
 import type { FieldType } from '../field/types/options';
@@ -15,7 +16,7 @@ import type { NormalizedOptions, Options } from './types/options';
 import type { DeleteDataSrc, DeleteDataSrcMethod } from './types/options/deleteDataSrc';
 import type { IconMap, IconSrc } from './types/options/iconMap';
 import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateDataSrc';
-import { isEditableOptions } from './utils/type-guard';
+import { isCheckboxEditor, isEditableOptions } from './utils/type-guard';
 import { validateTableElement } from './utils/validation';
 
 /**
@@ -161,6 +162,34 @@ export default class Editable<
     return new Map(this.fields.map((field) => [field.options.name, field]));
   }
 
+  private renderCheckboxField(field: Field<'html', 'checkbox'>): ConfigColumns {
+    return {
+      name: field.options.name,
+      type: 'html',
+      orderable: field.options.orderable,
+      visible: field.options.visible,
+      data: field.options.name,
+      render: (data): string => {
+        if (typeof data !== 'boolean')
+          throw new TypeError(`Expected boolean instead received ${typeof data}`);
+
+        return data
+          ? (field.options.editor as Checkbox).options.activeLabel
+          : (field.options.editor as Checkbox).options.inactiveLabel;
+      },
+    };
+  }
+
+  private renderField(field: Field<FieldType, keyof EditorType>): ConfigColumns {
+    return {
+      name: field.options.name,
+      type: field.options.type,
+      orderable: field.options.orderable,
+      visible: field.options.visible,
+      data: field.options.name,
+    };
+  }
+
   /**
    * Convert the fields into columns.
    *
@@ -169,13 +198,11 @@ export default class Editable<
    * @returns An array of ConfigColumns.
    */
   private fieldsMapToColumns(): ConfigColumns[] {
-    return Array.from(this.fieldsMap.entries()).map<ConfigColumns>(([name, field]) => ({
-      name,
-      type: field.options.type,
-      sortable: field.options.sortable,
-      visible: field.options.visible,
-      data: name,
-    }));
+    return Array.from(this.fieldsMap.values()).map<ConfigColumns>((field) =>
+      isCheckboxEditor(field.options.editor)
+        ? this.renderCheckboxField(field as Field<'html', 'checkbox'>)
+        : this.renderField(field),
+    );
   }
 
   private buttonsMapToColumns(): ConfigColumns[] {
@@ -183,7 +210,7 @@ export default class Editable<
 
     return this.buttons.map<ConfigColumns>((button) => ({
       type: 'html',
-      sortable: false,
+      orderable: false,
       data: null,
       render: (_row, _type, _set, { row }): HTMLSpanElement['outerHTML'] => {
         if (button.type === ButtonTypeIconMap.EDIT && !this.isEditable)

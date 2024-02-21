@@ -1,13 +1,13 @@
-import IconButtonBase from '../base';
-import type { Options, NormalizedOptions } from './types/options';
-import Icon from '../../utils/html-elements/icon';
-import { defaultOptions } from './defaults/options';
 import type { ApiRowMethods } from 'datatables.net-bs5';
-import type { JSONValue } from '../../types';
 import type Editable from '../../editable';
-import { ButtonTypeIconMap } from '../types';
-import HTTP from '../../utils/http';
 import { Events } from '../../editable/types/events';
+import type { JSONValue } from '../../types';
+import Icon from '../../utils/html-elements/icon';
+import HTTP from '../../utils/http';
+import IconButtonBase from '../base';
+import { ButtonTypeIconMap } from '../types';
+import { defaultOptions } from './defaults/options';
+import type { NormalizedOptions, Options } from './types/options';
 
 export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELETE> {
   private readonly _options: NormalizedOptions;

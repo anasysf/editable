@@ -1,4 +1,4 @@
-import { isValidID, isTableElement } from './assert';
+import { isTableElement, isValidID } from './assert';
 
 export function validateTableElement(id: Element['id']): HTMLTableElement {
   isValidID(id);

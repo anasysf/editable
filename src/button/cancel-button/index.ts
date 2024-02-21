@@ -1,11 +1,11 @@
-import IconButtonBase from '../base';
-import type { Options, NormalizedOptions } from './types/options';
-import Icon from '../../utils/html-elements/icon';
-import { defaultOptions } from './defaults/options';
 import type { ApiRowMethods } from 'datatables.net-bs5';
-import type { JSONValue } from '../../types';
 import type Editable from '../../editable';
+import type { JSONValue } from '../../types';
+import Icon from '../../utils/html-elements/icon';
+import IconButtonBase from '../base';
 import { ButtonTypeIconMap } from '../types';
+import { defaultOptions } from './defaults/options';
+import type { NormalizedOptions, Options } from './types/options';
 
 export default class CancelButton extends IconButtonBase<ButtonTypeIconMap.CANCEL> {
   private readonly _options: NormalizedOptions;

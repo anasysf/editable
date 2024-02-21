@@ -1,5 +1,5 @@
-import type { NormalizedOptions, Options, FieldType, RequiredOptions } from '../types/options';
 import type { EditorType } from '../../editor/types/options';
+import type { FieldType, NormalizedOptions, Options, RequiredOptions } from '../types/options';
 
 /**
  * Set the default options.
@@ -14,7 +14,7 @@ export function defaultOptions<T extends FieldType, E extends keyof EditorType>(
   options: Options<T, E>,
 ): NormalizedOptions<T, E> {
   const defaultOpts = {
-    sortable: options.sortable ?? true,
+    orderable: options.orderable ?? true,
     visible: options.visible ?? true,
   } satisfies Pick<Options<T, E>, RequiredOptions>;
 

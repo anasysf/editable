@@ -6,6 +6,7 @@ export interface EditorType {
   readonly string: HTMLInputElement;
   readonly number: HTMLInputElement;
   readonly text: HTMLTextAreaElement;
+  readonly checkbox: HTMLInputElement;
 }
 
 /* export type StringEditorType = Extract<EditorType, EditorType.STRING | EditorType.TEXT>;

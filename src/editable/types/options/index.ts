@@ -1,13 +1,13 @@
-import type Field from '../../../field';
-import type { FieldType } from '../../../field/types/options';
-import type { EditorType } from '../../../editor/types/options';
-import type { WithRequired } from '../../../types';
 import type IconButtonBase from '../../../button/base';
 import type { ButtonTypeIconMap } from '../../../button/types';
+import type { EditorType } from '../../../editor/types/options';
+import type Field from '../../../field';
+import type { FieldType } from '../../../field/types/options';
+import type { WithRequired } from '../../../types';
 import type { DataSrc, DataSrcMethod } from './dataSrc';
-import type { UpdateDataSrc } from './updateDataSrc';
-import type { IconMap, IconSrc } from './iconMap';
 import type { DeleteDataSrc } from './deleteDataSrc';
+import type { IconMap, IconSrc } from './iconMap';
+import type { UpdateDataSrc } from './updateDataSrc';
 
 export interface OptionsBASE<E extends boolean | undefined> {
   readonly editable?: E;

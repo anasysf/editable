@@ -1,6 +1,6 @@
 import type { Config, ConfigColumns } from 'datatables.net-bs5';
 import type { Options } from '../types/options';
-import { isIDataSrcPost, isDataSrcString } from '../utils/type-guard';
+import { isDataSrcString, isIDataSrcPost } from '../utils/type-guard';
 
 /**
  * Set the default DataTable config.

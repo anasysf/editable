@@ -1,15 +1,14 @@
-import IconButtonBase from '../base';
-import type { Options, NormalizedOptions } from './types/options';
-import Icon from '../../utils/html-elements/icon';
-import { defaultOptions } from './defaults/options';
 import type { ApiRowMethods } from 'datatables.net-bs5';
-import type { JSONValue } from '../../types';
-import type { HTMLElementsWithValue } from '../../types';
-import { replaceDeleteIcon, replaceEditIcon } from '../../editable/utils';
 import type Editable from '../../editable';
-import { ButtonTypeIconMap } from '../types';
-import SubmitButton from '../submit-button';
+import { replaceDeleteIcon, replaceEditIcon } from '../../editable/utils';
+import type { HTMLElementsWithValue, JSONValue } from '../../types';
+import Icon from '../../utils/html-elements/icon';
+import IconButtonBase from '../base';
 import CancelButton from '../cancel-button';
+import SubmitButton from '../submit-button';
+import { ButtonTypeIconMap } from '../types';
+import { defaultOptions } from './defaults/options';
+import type { NormalizedOptions, Options } from './types/options';
 
 export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
   private readonly _options: NormalizedOptions;
@@ -70,6 +69,11 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
         return;
     }
 
+    const tr = (target as HTMLElement).closest('tr');
+    if (!tr) throw new ReferenceError('No <tr> found.');
+
+    const tds = tr.cells;
+
     const rowData = row.data();
     const oldRowData = structuredClone(rowData);
     const rowIdx = row.index();
@@ -93,33 +97,36 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
       );
 
     const elements: HTMLElementsWithValue[] = [];
-    for (const field of fields) {
+    for (const [idx, field] of fields.entries()) {
       const fieldOpts = field.options;
+
       const editor = fieldOpts.editor;
       if (!editor) continue;
 
       const fieldName = fieldOpts.name as keyof TData;
       if (!(fieldName in rowData)) continue;
 
+      const td = tds.item(idx);
+      if (!td) continue;
+
       const element = editor.generateHTML(
         fieldName as Extract<keyof typeof fieldName, string>,
         rowIdx,
-        rowData[fieldName] as Extract<TData[typeof fieldName], string>,
+        rowData[fieldName] as Extract<TData[typeof fieldName], string | boolean>,
       );
 
-      rowData[fieldName] = element.outerHTML as Extract<TData, TData[typeof fieldName]>;
+      td.innerHTML = element.outerHTML;
       elements.push(element);
     }
 
     if (elements.length !== 0) {
-      row.data(rowData).draw(false);
-
       const submitBtn = replaceEditIcon(row, editable, submitButton);
+      const cancelBtn = replaceDeleteIcon(row, editable, cancelButton);
+
       submitBtn.addEventListener('click', (evt): void => {
         void submitButton.onClick(evt, row, oldRowData, editable);
       });
 
-      const cancelBtn = replaceDeleteIcon(row, editable, cancelButton);
       cancelBtn.addEventListener('click', (evt): void => {
         cancelButton.onClick(evt, row, oldRowData, editable);
       });
