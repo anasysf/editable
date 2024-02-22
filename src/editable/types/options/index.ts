@@ -7,6 +7,7 @@ import type { WithRequired } from '../../../types';
 import type { DataSrc, DataSrcMethod } from './dataSrc';
 import type { DeleteDataSrc } from './deleteDataSrc';
 import type { IconMap, IconSrc } from './iconMap';
+import type { PostDataSrc } from './postDataSrc';
 import type { UpdateDataSrc } from './updateDataSrc';
 
 export interface OptionsBASE<E extends boolean | undefined> {
@@ -29,6 +30,8 @@ export interface OptionsBASE<E extends boolean | undefined> {
   readonly rowId?: string;
 
   readonly deleteDataSrc?: DeleteDataSrc;
+
+  readonly postDataSrc?: PostDataSrc;
 }
 
 export type EditableOptions = OptionsBASE<true> & {

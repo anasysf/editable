@@ -24,13 +24,13 @@ const editable = new Editable('my-table', {
       type: 'string',
       editor: new StringInput(),
     }),
-    /* new Field({
-      name: 'stock',
+    new Field({
+      name: 'description',
       editor: new Checkbox({
         activeLabel: 'yessiir',
         inactiveLabel: 'nosir',
       }),
-    }), */
+    }),
   ],
   buttons: [new EditButton(), new DeleteButton()],
   updateDataSrc: {
@@ -38,11 +38,14 @@ const editable = new Editable('my-table', {
   },
   rowId: 'id',
   deleteDataSrc: 'https://dummyjson.com/products/1',
+  postDataSrc: 'https://dummyjson.com/products/add',
 });
 
 editable
   .on(Events.UPDATED, ({ test }) => console.log(test))
-  .on(Events.DELETE, ({ deleteRow }) => deleteRow(true)
-  );
+  .on(Events.DELETE, ({ deleteRow }) => deleteRow(true));
+
+const addRowBtn = document.getElementById('add-row');
+addRowBtn.addEventListener('click', () => editable.addRow());
 
 console.log(editable);

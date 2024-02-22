@@ -111,8 +111,8 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
 
       const element = editor.generateHTML(
         fieldName as Extract<keyof typeof fieldName, string>,
-        rowIdx,
         rowData[fieldName] as Extract<TData[typeof fieldName], string | boolean>,
+        rowIdx,
       );
 
       td.innerHTML = element.outerHTML;

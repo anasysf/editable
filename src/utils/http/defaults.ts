@@ -1,4 +1,5 @@
 import type { DeleteDataSrcMethod } from '../../editable/types/options/deleteDataSrc';
+import type { PostDataSrcMethod } from '../../editable/types/options/postDataSrc';
 import type { UpdateDataSrcMethod } from '../../editable/types/options/updateDataSrc';
 import type { HTTPRequestFormat, JSONValue } from '../../types';
 
@@ -14,6 +15,22 @@ function defaultBody<B extends Record<PropertyKey, JSONValue>>(
   format: HTTPRequestFormat = 'json',
 ): BodyInit {
   return format === 'json' ? JSON.stringify(body) : buildFormData(body);
+}
+
+export function defaultPostInit<B extends Record<PropertyKey, JSONValue>>(
+  body: B,
+  init?: RequestInit,
+  method: PostDataSrcMethod = 'POST',
+  format: HTTPRequestFormat = 'json',
+): RequestInit {
+  return {
+    method,
+    body: defaultBody(body, format),
+    headers: {
+      'Content-Type': format === 'json' ? 'application/json' : 'application/form-data',
+    },
+    ...init,
+  };
 }
 
 export function defaultUpdateInit<B extends Record<PropertyKey, JSONValue>>(

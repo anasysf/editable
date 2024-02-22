@@ -15,14 +15,15 @@ export default class Checkbox extends BaseEditor<'checkbox'> {
 
   public generateHTML(
     fieldName: string,
-    rowIdx: number,
     defaultValue: HTMLInputElement['defaultChecked'],
+    rowIdx?: number,
+    editMode: boolean = true,
   ): HTMLInputElement {
     const input = this.element;
     const options = this.options;
 
     input.type = this.type;
-    input.id = `checkbox-${fieldName}-inp-${rowIdx}`;
+    input.id = editMode ? `checkbox-${fieldName}-inp-${rowIdx}` : `checkbox-${fieldName}-inp`;
     input.name = 'checkbox-row-inp';
     input.className = options.className ?? 'form-check-input form-check-input-sm';
     input.required = options.required;

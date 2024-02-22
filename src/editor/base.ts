@@ -21,11 +21,12 @@ export default abstract class BaseEditor<
 
   public abstract generateHTML(
     fieldName: string,
-    rowIdx: number,
     defaultValue:
       | E['value']
       | HTMLInputElement['defaultChecked']
       | HTMLInputElement['valueAsNumber'],
+    rowIdx?: number,
+    editMode?: boolean,
   ): E;
 
   public getElementValue(): boolean | string | number {

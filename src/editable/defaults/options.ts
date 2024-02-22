@@ -74,6 +74,7 @@ export function defaultOptions<E extends boolean | undefined>(
   const iconMap = defaultIconMap(options.iconMap);
   const updateDataSrc = isEditableOptions(options) && options.updateDataSrc;
   const deleteDataSrc = options.deleteDataSrc;
+  const postDataSrc = options.postDataSrc;
   const rowId = options.rowId;
 
   return {
@@ -85,6 +86,7 @@ export function defaultOptions<E extends boolean | undefined>(
     iconSrc,
     rowId,
     deleteDataSrc,
+    postDataSrc,
     ...(updateDataSrc && { updateDataSrc: defaultUpdateDataSrc(updateDataSrc) }),
   } as NormalizedOptions<E>;
 }

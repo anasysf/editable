@@ -15,15 +15,16 @@ export default class StringInput extends BaseEditor<'string'> {
 
   public generateHTML(
     fieldName: string,
-    rowIdx: number,
     defaultValue: HTMLInputElement['value'],
+    rowIdx?: number,
+    editMode: boolean = true,
   ): HTMLInputElement {
     const input = this.element;
     const options = this._options;
 
     input.type = this.type;
-    input.id = `edit-${fieldName}-inp-${rowIdx}`;
-    input.name = 'edit-row-inp';
+    input.id = editMode ? `edit-${fieldName}-inp-${rowIdx}` : `add-new-row-${fieldName}-inp`;
+    input.name = editMode ? 'edit-row-inp' : 'add-new-row-inp';
     input.className = options.className ?? 'form-control form-control-sm';
     input.required = options.required;
     input.readOnly = options.readonly;

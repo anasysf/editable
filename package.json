@@ -1,6 +1,6 @@
 {
   "name": "editable",
-  "version": "0.1.6",
+  "version": "0.9.0",
   "description": "",
   "main": "dist/iife/editable.min.js",
   "module": "dist/es/index.js",
