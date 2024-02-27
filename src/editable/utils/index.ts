@@ -2,36 +2,36 @@ import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '..';
 import type CancelButton from '../../button/cancel-button';
 import type SubmitButton from '../../button/submit-button';
-import type { JSONValue } from '../../types';
+import type { JsonValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
 
-export function replaceEditIcon<TData extends Record<string, JSONValue>>(
-  row: ApiRowMethods<TData>,
-  editable: Editable<TData, boolean>,
+export function replaceEditIcon<T extends Record<string, JsonValue>>(
+  row: ApiRowMethods<T>,
+  editable: Editable<T, boolean>,
   submitButton: SubmitButton,
 ): HTMLSpanElement {
-  const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
+  const rowId = row.id().trim() === 'undefined' ? row.index() : row.id();
 
-  const editIconID = `edit-row-${rowId}-btn`;
-  const editIcon = document.getElementById(editIconID);
+  const editIconId = `edit-row-${rowId}-btn`;
+  const editIcon = document.getElementById(editIconId);
 
-  const submitIcon = submitButton.generateHTML(row, editable);
+  const submitIcon = submitButton.generateHtml(row, editable);
   editIcon?.replaceWith(submitIcon);
 
   return submitIcon;
 }
 
-export function replaceDeleteIcon<TData extends Record<string, JSONValue>>(
-  row: ApiRowMethods<TData>,
-  editable: Editable<TData, boolean>,
+export function replaceDeleteIcon<T extends Record<string, JsonValue>>(
+  row: ApiRowMethods<T>,
+  editable: Editable<T, boolean>,
   cancelButton: CancelButton,
 ): HTMLSpanElement {
-  const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
+  const rowId = row.id().trim() === 'undefined' ? row.index() : row.id();
 
-  const deleteIconID = `delete-row-${rowId}-btn`;
-  const deleteIcon = document.getElementById(deleteIconID);
+  const deleteIconId = `delete-row-${rowId}-btn`;
+  const deleteIcon = document.getElementById(deleteIconId);
 
-  const cancelIcon = cancelButton.generateHTML(row, editable);
+  const cancelIcon = cancelButton.generateHtml(row, editable);
   deleteIcon?.replaceWith(cancelIcon);
 
   return cancelIcon;
@@ -52,5 +52,5 @@ export function setCancelIcon(
     className,
   });
 
-  return icon.generateHTML();
+  return icon.generateHtml();
 }

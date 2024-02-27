@@ -1,9 +1,9 @@
-import type { OptionsBASE } from '../../../types/options';
+import type { OptionsBase } from '../../../types/options';
 
-export interface CheckboxOptions extends OptionsBASE {
+export type CheckboxOptions = {
   readonly activeLabel: string;
   readonly inactiveLabel: string;
-}
+} & OptionsBase;
 
 export type RequiredOptions = 'readonly' | 'required' | 'disabled';
 

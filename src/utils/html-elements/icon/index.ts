@@ -1,17 +1,9 @@
-import HTMLElementBase from '../base';
+import HtmlElementBase from '../base';
 import type { Options } from './types/options';
 
-export default class Icon extends HTMLElementBase {
-  private readonly _options: Options;
-
-  public constructor(options: Options) {
+export default class Icon extends HtmlElementBase {
+  public constructor(private readonly options: Options) {
     super();
-
-    this._options = options;
-  }
-
-  public get options(): Options {
-    return this._options;
   }
 
   public get icon(): HTMLElement['className'] {
@@ -30,19 +22,19 @@ export default class Icon extends HTMLElementBase {
     return this.options.className;
   }
 
-  public generateHTML(): HTMLSpanElement {
+  public generateHtml(): HTMLSpanElement {
     const fragment = document.createDocumentFragment();
 
     const span = document.createElement('span');
     span.role = 'button';
-    this.id && (span.id = this.id);
-    this.name && span.setAttribute('name', this.name);
-    this.className && (span.className = this.className);
+    span.id = this.id;
+    if (this.name) span.setAttribute('name', this.name);
+    if (this.className) span.className = this.className;
 
     const icon = document.createElement('i');
     icon.role = 'button';
     icon.className = this.icon;
-    this.name && icon.setAttribute('name', this.name);
+    if (this.name) icon.setAttribute('name', this.name);
 
     span.appendChild(icon);
 

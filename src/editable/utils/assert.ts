@@ -1,4 +1,4 @@
-import type { TableID } from '../../types';
+import type { TableId } from '../../types';
 
 export function isTableElement(element: Element): asserts element is HTMLTableElement {
   if (!(element instanceof HTMLTableElement))
@@ -9,7 +9,7 @@ export function isTableElement(element: Element): asserts element is HTMLTableEl
     );
 }
 
-export function isValidID(id: Element['id']): asserts id is TableID {
+export function isValidId(id: Element['id']): asserts id is TableId {
   if (id.trim().length === 0)
     throw new SyntaxError('Expected a valid HTML Element id, instead received an empty string.');
 }

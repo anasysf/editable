@@ -1,16 +1,15 @@
-import type { HTTPMethod, HTTPRequestFormat, JSONValue } from '../../../types';
+import type { HttpMethod, HttpRequestFormat, JsonValue } from '../../../types';
 
-export type PostDataSrcMethod = Extract<HTTPMethod, 'POST'>;
+export type PostDataSrcMethod = Extract<HttpMethod, 'POST'>;
 
-export interface IPostDataSrc {
+export type PostDataSrcObj = {
   readonly src: string;
   readonly method?: PostDataSrcMethod;
-  readonly format?: HTTPRequestFormat;
-}
+  readonly format?: HttpRequestFormat;
+};
 
-export type PostDataSrc = IPostDataSrc | string;
+export type PostDataSrc = PostDataSrcObj | string;
 
-/* eslint-disable-next-line */
 export type Response = {
-  readonly content: Record<PropertyKey, JSONValue>;
+  readonly content: Record<PropertyKey, JsonValue>;
 };

@@ -1,5 +1,5 @@
-export function exists<T>(target: T): target is Exclude<T, null | undefined> {
-  return !!target;
+export function exists<T>(target: T): target is Exclude<T, undefined> {
+  return Boolean(target);
 }
 
 export function isString(target: unknown): target is string {

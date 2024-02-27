@@ -13,14 +13,14 @@ export default class Checkbox extends BaseEditor<'checkbox'> {
     this.options = opts;
   }
 
-  public generateHTML(
+  public generateHtml(
     fieldName: string,
     defaultValue: HTMLInputElement['defaultChecked'],
     rowIdx?: number,
-    editMode: boolean = true,
+    editMode = true,
   ): HTMLInputElement {
     const input = this.element;
-    const options = this.options;
+    const { options } = this;
 
     input.type = this.type;
     input.id = editMode ? `checkbox-${fieldName}-inp-${rowIdx}` : `checkbox-${fieldName}-inp`;

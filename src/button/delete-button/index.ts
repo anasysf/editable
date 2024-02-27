@@ -1,9 +1,9 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../../editable';
 import { Events } from '../../editable/types/events';
-import type { JSONValue } from '../../types';
+import type { JsonValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
-import HTTP from '../../utils/http';
+import Http from '../../utils/http';
 import IconButtonBase from '../base';
 import { ButtonTypeIconMap } from '../types';
 import { defaultOptions } from './defaults/options';
@@ -32,11 +32,11 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     return this.color;
   }
 
-  public generateHTML<TData extends Record<string, JSONValue>>(
-    row: ApiRowMethods<TData>,
-    editable: Editable<TData, boolean>,
+  public generateHtml<T extends Record<string, JsonValue>>(
+    row: ApiRowMethods<T>,
+    editable: Editable<T, boolean>,
   ): HTMLSpanElement {
-    const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
+    const rowId = row.id().trim() === 'undefined' ? row.index() : row.id();
     const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
     if (!icon)
       throw new ReferenceError(
@@ -50,16 +50,16 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
       icon,
     });
 
-    return element.generateHTML();
+    return element.generateHtml();
   }
 
-  public onClick<TData extends Record<string, JSONValue>>(
+  public onClick<T extends Record<string, JsonValue>>(
     evt: MouseEvent,
-    row: ApiRowMethods<TData>,
-    _oldRowData: TData,
-    editable: Editable<TData, boolean>,
+    row: ApiRowMethods<T>,
+    _oldRowData: T,
+    editable: Editable<T, boolean>,
   ): void {
-    const target = evt.target;
+    const { target } = evt;
     if (!target || target instanceof HTMLTableCellElement) return;
 
     if (target instanceof HTMLElement) {
@@ -81,26 +81,25 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
       [rowIdKey]: rowId,
     };
 
-    const deleteDataSrc = editable.deleteDataSrc;
+    const { deleteDataSrc } = editable;
     if (!deleteDataSrc) throw new ReferenceError('Please set a `deleteDataSrc` property.');
 
-    const deleteDataSrcSource = editable.deleteDataSrcSource;
+    const { deleteDataSrcSource } = editable;
     if (!deleteDataSrcSource || deleteDataSrcSource.trim().length === 0)
       throw new ReferenceError('Please set a `src` in the `deleteDataSrc` property.');
 
     const deleteDataSrcMethod = editable.deleteDataSrcMethod ?? 'DELETE';
     const deleteDataSrcFormat = editable.deleteDataSrcFormat ?? 'json';
 
-    const http = new HTTP(deleteDataSrcSource);
+    const http = new Http(deleteDataSrcSource);
 
     editable.emit(Events.DELETE, {
-      deleteRow: async (confirmDelete: boolean = true): Promise<void> => {
+      async deleteRow(confirmDelete = true): Promise<void> {
         if (!confirmDelete) return;
 
         try {
           await http.delete(rowIdMap, undefined, deleteDataSrcMethod, deleteDataSrcFormat);
           row.remove().draw(false);
-          return;
         } catch (err) {
           console.error(err);
         }

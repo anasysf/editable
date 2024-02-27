@@ -1,10 +1,10 @@
-import type { OptionsBASE } from '../../../types/options';
+import type { OptionsBase } from '../../../types/options';
 
-export interface StringOptions extends OptionsBASE {
+export type StringOptions = {
   readonly minLength?: HTMLInputElement['minLength'];
   readonly maxLength?: HTMLInputElement['maxLength'];
   readonly pattern?: HTMLInputElement['pattern'];
-}
+} & OptionsBase;
 
 export type RequiredOptions = 'readonly' | 'required' | 'disabled';
 

@@ -1,27 +1,27 @@
-import type { HTTPMethod, HTTPRequestFormat, JSONValue } from '../../../types';
+import type { HttpMethod, HttpRequestFormat, JsonValue } from '../../../types';
 
 /** The dataSrc property HTTP Method. */
-export type DataSrcMethod = Extract<HTTPMethod, 'GET' | 'POST'>;
+export type DataSrcMethod = Extract<HttpMethod, 'GET' | 'POST'>;
 
-export interface IDataSrcBASE {
+export type DataSrcObj = {
   /** The endpoint to send the request to. */
   readonly src: string;
   /** The method used, 'GET' | 'POST'. */
   readonly method?: DataSrcMethod;
   /** The prop to get the data from. */
   readonly prop?: string;
-}
+};
 
-export type IDataSrcGET = IDataSrcBASE & {
+export type DataSrcGet = DataSrcObj & {
   readonly method: 'GET';
 };
 
-export type IDataSrcPOST = IDataSrcBASE & {
+export type DataSrcPost = DataSrcObj & {
   readonly method: 'POST';
   /** The data sent with the request. */
-  readonly data?: Record<PropertyKey, JSONValue>;
+  readonly data?: Record<PropertyKey, JsonValue>;
   /** The format used to send the request 'json' or 'form-data'. */
-  readonly format?: HTTPRequestFormat;
+  readonly format?: HttpRequestFormat;
 };
 
 /**
@@ -29,5 +29,5 @@ export type IDataSrcPOST = IDataSrcBASE & {
  * @typeParam T - The HTTP Method 'GET' or 'POST'.
  */
 export type DataSrc<T extends DataSrcMethod> =
-  | (T extends 'GET' ? IDataSrcGET : IDataSrcPOST)
+  | (T extends 'GET' ? DataSrcGet : DataSrcPost)
   | string;

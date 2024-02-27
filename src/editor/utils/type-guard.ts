@@ -1,6 +1,6 @@
-import type { HTMLElementsWithValue } from '../../types';
+import type { HtmlElementsWithValue } from '../../types';
 
-export function isHTMLElementsWithValue(element: Element): element is HTMLElementsWithValue {
+export function isHtmlElementsWithValue(element: Element): element is HtmlElementsWithValue {
   return (
     element instanceof HTMLInputElement ||
     element instanceof HTMLTextAreaElement ||

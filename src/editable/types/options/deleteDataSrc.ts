@@ -1,11 +1,11 @@
-import type { HTTPMethod, HTTPRequestFormat } from '../../../types';
+import type { HttpMethod, HttpRequestFormat } from '../../../types';
 
-export type DeleteDataSrcMethod = Extract<HTTPMethod, 'DELETE' | 'POST'>;
+export type DeleteDataSrcMethod = Extract<HttpMethod, 'DELETE' | 'POST'>;
 
-export interface IDeleteDataSrc {
+export type DeleteDataSrcObj = {
   readonly src: string;
   readonly method?: DeleteDataSrcMethod;
-  readonly format?: HTTPRequestFormat;
-}
+  readonly format?: HttpRequestFormat;
+};
 
-export type DeleteDataSrc = IDeleteDataSrc | string;
+export type DeleteDataSrc = DeleteDataSrcObj | string;

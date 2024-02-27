@@ -8,19 +8,19 @@ import type BaseEditor from '../editor/base';
 import type Checkbox from '../editor/input/checkbox';
 import StringInput from '../editor/input/string-input';
 import type { EditorType } from '../editor/types/options';
-import { isHTMLElementsWithValue } from '../editor/utils/type-guard';
+import { isHtmlElementsWithValue } from '../editor/utils/type-guard';
 import type Field from '../field';
 import type { FieldType } from '../field/types/options';
 import type {
-  HTMLElementsWithValue,
-  HTTPRequestFormat,
-  JSONArray,
-  JSONObject,
-  JSONValue,
-  TableID,
+  HtmlElementsWithValue,
+  HttpRequestFormat,
+  JsonArray,
+  JsonObject,
+  JsonValue,
+  TableId,
 } from '../types';
 import EventEmitter from '../utils/event-emitter';
-import HTTP from '../utils/http';
+import Http from '../utils/http';
 import { isString } from '../utils/type-guard';
 import { defaultConfig } from './defaults/config';
 import { defaultOptions } from './defaults/options';
@@ -39,11 +39,11 @@ import { validateTableElement } from './utils/validation';
  * @typeParam TData - The type of the data in the Editable instance.
  */
 export default class Editable<
-  TData extends Record<string, JSONValue>,
+  D extends Record<string, JsonValue>,
   E extends boolean | undefined = true,
 > extends EventEmitter<EventMap> {
   /** The HTML Table element ID. */
-  public readonly tableId: TableID;
+  public readonly tableId: TableId;
 
   /** The HTML Table element. */
   public readonly table: HTMLTableElement;
@@ -58,14 +58,14 @@ export default class Editable<
    * The DataTable instance.
    * @typeParam TData - The data type.
    */
-  public readonly dataTable: Api<TData>;
+  public readonly dataTable: Api<D>;
 
   /**
    * Create a new Editable instance.
    * @param tableId - The Table element's ID that the instance attaches to.
    * @param options - The Editable instance's options.
    */
-  public constructor(tableId: TableID, options: Options<E>) {
+  public constructor(tableId: TableId, options: Options<E>) {
     // Validate the `tableId` & the element associated with it.
     const table = validateTableElement(tableId);
 
@@ -93,7 +93,7 @@ export default class Editable<
     this.config = config;
 
     // Initiate the DataTables instance.
-    this.dataTable = this.initDT(this.table, this.config);
+    this.dataTable = this.initDatatables(this.table, this.config);
   }
 
   public get isEditable(): boolean {
@@ -105,11 +105,11 @@ export default class Editable<
    *
    * @returns An array of the fields.
    */
-  public get fields(): Field<FieldType, keyof EditorType>[] {
+  public get fields(): Array<Field<FieldType, keyof EditorType>> {
     return this.options.fields;
   }
 
-  public get buttons(): IconButtonBase<ButtonTypeIconMap>[] | undefined {
+  public get buttons(): Array<IconButtonBase<ButtonTypeIconMap>> | undefined {
     return this.options.buttons;
   }
 
@@ -123,45 +123,50 @@ export default class Editable<
 
   public get updateDataSrc(): UpdateDataSrc | undefined {
     if (isEditableOptions(this.options)) return this.options.updateDataSrc;
+    return undefined;
   }
 
   public get updateDataSrcSource(): string | undefined {
     if (isEditableOptions(this.options))
       if (isString(this.updateDataSrc)) return this.updateDataSrc;
       else return this.updateDataSrc?.src;
+    return undefined;
   }
 
   public get updateDataSrcMethod(): UpdateDataSrcMethod | undefined {
     if (isEditableOptions(this.options))
       if (isString(this.updateDataSrc)) return 'PUT';
       else return this.updateDataSrc?.method ?? 'PUT';
+    return undefined;
   }
 
-  public get updateDataSrcFormat(): HTTPRequestFormat | undefined {
+  public get updateDataSrcFormat(): HttpRequestFormat | undefined {
     if (isEditableOptions(this.options))
       if (isString(this.updateDataSrc)) return 'json';
       else return this.updateDataSrc?.format ?? 'json';
+    return undefined;
   }
 
   public get updateDataSrcProp(): string | undefined {
     if (isEditableOptions(this.options))
       if (isString(this.updateDataSrc)) return 'result.content';
       else return this.updateDataSrc?.prop ?? 'result.content';
+    return undefined;
   }
 
   public get postDataSrcSource(): string | undefined {
     if (isString(this.options.postDataSrc)) return this.options.postDataSrc;
-    else return this.options.postDataSrc?.src;
+    return this.options.postDataSrc?.src;
   }
 
   public get potsDataSrcMethod(): PostDataSrcMethod | undefined {
     if (isString(this.options.postDataSrc)) return 'POST';
-    else return this.options.postDataSrc?.method ?? 'POST';
+    return this.options.postDataSrc?.method ?? 'POST';
   }
 
-  public get postDataSrcFormat(): HTTPRequestFormat | undefined {
+  public get postDataSrcFormat(): HttpRequestFormat | undefined {
     if (isString(this.options.postDataSrc)) return 'json';
-    else return this.options.postDataSrc?.format ?? 'json';
+    return this.options.postDataSrc?.format ?? 'json';
   }
 
   public get deleteDataSrc(): DeleteDataSrc | undefined {
@@ -176,36 +181,8 @@ export default class Editable<
     return isString(this.deleteDataSrc) ? 'DELETE' : this.deleteDataSrc?.method ?? 'DELETE';
   }
 
-  public get deleteDataSrcFormat(): HTTPRequestFormat | undefined {
+  public get deleteDataSrcFormat(): HttpRequestFormat | undefined {
     return isString(this.deleteDataSrc) ? 'json' : this.deleteDataSrc?.format ?? 'json';
-  }
-
-  /**
-   * Get the Editable instance's fields as a Map.
-   *
-   *
-   * @internal
-   *
-   * @returns A Map of the fields.
-   */
-  private get fieldsMap(): Map<string, Field<FieldType, keyof EditorType>> {
-    return new Map(this.fields.map((field) => [field.options.name, field]));
-  }
-
-  private defaultEditorValue(
-    editor: BaseEditor<keyof EditorType, HTMLInputElement | HTMLTextAreaElement>,
-  ): false | '' | 0 {
-    switch (editor.type) {
-      case 'string':
-      case 'text':
-        return '';
-      case 'number':
-        return 0;
-      case 'checkbox':
-        return false;
-      default:
-        return '';
-    }
   }
 
   public addRow(): void {
@@ -214,30 +191,20 @@ export default class Editable<
     const newRowTr = Array.from(this.table.rows).find(getRowById);
     if (newRowTr) return;
 
-    const editors: TData = {} as TData;
-    /* const fragment = new DocumentFragment();
-    const tr = document.createElement('tr'); */
+    const editors: Record<string, string> = {};
 
     for (const field of this.fields) {
       const editor = field.options.editor ?? new StringInput();
 
-      const editorHTML = editor.generateHTML(
+      const editorHtml = editor.generateHtml(
         field.options.name,
         this.defaultEditorValue(editor),
         undefined,
         false,
-      ).outerHTML as TData[keyof TData];
+      ).outerHTML as D[keyof D];
 
-      console.log(editorHTML);
-
-      /* const td = tr.insertCell();
-      td.innerHTML = editorHTML as string; */
-
-      editors[field.options.name as keyof TData] = editorHTML;
+      editors[field.options.name] = editorHtml as string;
     }
-    // fragment.appendChild(tr);
-
-    // console.log(tr);
 
     const newRow = this.dataTable.row.add(editors);
 
@@ -253,17 +220,48 @@ export default class Editable<
     if (topPageRow) topPageRow.insertAdjacentElement('beforebegin', newRowNode);
 
     const submitButton = new SubmitButton();
-    const submitBtn = replaceEditIcon(newRow, this as Editable<TData, boolean>, submitButton);
+    const submitBtn = replaceEditIcon(newRow, this as Editable<D, boolean>, submitButton);
     submitBtn.addEventListener('click', (): void => {
       void this.submitNewRow(newRow);
     });
 
     const cancelButton = new CancelButton();
-    const cancelBtn = replaceDeleteIcon(newRow, this as Editable<TData, boolean>, cancelButton);
+    const cancelBtn = replaceDeleteIcon(newRow, this as Editable<D, boolean>, cancelButton);
     cancelBtn.addEventListener('click', () => this.cancelNewRow(newRow));
   }
 
-  private getElementValue(element: HTMLElementsWithValue): boolean | string | number {
+  /**
+   * Get the Editable instance's fields as a Map.
+   *
+   *
+   * @internal
+   *
+   * @returns A Map of the fields.
+   */
+  private get fieldsMap(): Map<string, Field<FieldType, keyof EditorType>> {
+    return new Map(this.fields.map((field) => [field.options.name, field]));
+  }
+
+  private defaultEditorValue(
+    editor: BaseEditor<
+      keyof EditorType,
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ): false | '' | 0 {
+    switch (editor.type) {
+      case 'string':
+      case 'text':
+        return '';
+      case 'number':
+        return 0;
+      case 'checkbox':
+        return false;
+      default:
+        return '';
+    }
+  }
+
+  private getElementValue(element: HtmlElementsWithValue): boolean | string | number {
     if (element instanceof HTMLInputElement) {
       switch (element.type) {
         case 'checkbox':
@@ -280,43 +278,37 @@ export default class Editable<
     return element.value;
   }
 
-  private async submitNewRow(newRow: ApiRowMethods<TData>): Promise<void> {
+  private async submitNewRow(newRow: ApiRowMethods<D>): Promise<void> {
     const tr = newRow.node() as HTMLTableRowElement;
     const tds = tr.cells;
 
     const rowData = newRow.data();
-    const fields = this.fields;
+    const { fields } = this;
 
-    const iconSrc = this.iconSrc;
-    const iconMap = this.iconMap;
+    const { iconSrc } = this;
+    const { iconMap } = this;
     const submitIcon = iconMap[iconSrc]['submit-row'];
     if (!submitIcon)
       throw new ReferenceError(
         `Please set a 'submit-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
       );
 
-    const formData: Record<
-      Extract<TData, keyof TData>,
-      Exclude<JSONValue, JSONArray | JSONObject | null>
-    > = {} as Record<
-      Extract<TData, keyof TData>,
-      Exclude<JSONValue, JSONArray | JSONObject | null>
-    >;
-    const invalidElements: HTMLElementsWithValue[] = [];
+    const formData: Record<string, Exclude<JsonValue, JsonArray | JsonObject | undefined>> = {};
+    const invalidElements: HtmlElementsWithValue[] = [];
 
     for (const [idx, field] of fields.entries()) {
       const fieldOpts = field.options;
-      const editor = fieldOpts.editor;
+      const { editor } = fieldOpts;
       if (!editor) continue;
 
-      const fieldName = fieldOpts.name as keyof TData;
+      const fieldName = fieldOpts.name;
       if (!(fieldName in rowData)) continue;
 
       const td = tds.item(idx);
       if (!td) continue;
 
       const element = td.firstElementChild;
-      if (!element || !isHTMLElementsWithValue(element)) continue;
+      if (!element || !isHtmlElementsWithValue(element)) continue;
 
       editor.setElementValue(this.getElementValue(element));
       if (!editor.validateElement()) {
@@ -324,23 +316,23 @@ export default class Editable<
         continue;
       }
 
-      formData[fieldName as Extract<TData, keyof TData>] = editor.getElementValue();
-      rowData[fieldName] = editor.getElementValue() as TData[typeof fieldName];
+      formData[fieldName] = editor.getElementValue();
+      rowData[fieldName as keyof D] = editor.getElementValue() as D[typeof fieldName];
     }
 
     if (invalidElements.length !== 0) return;
 
-    const postDataSrc = this.options.postDataSrc;
+    const { postDataSrc } = this.options;
     if (!postDataSrc) throw new ReferenceError('Please set a `postDataSrc` property.');
 
-    const postDataSrcSource = this.postDataSrcSource;
+    const { postDataSrcSource } = this;
     if (!postDataSrcSource || postDataSrcSource.trim().length === 0)
       throw new ReferenceError('Please set a `src` in the `postDataSrc` property.');
 
     const postDataSrcMethod = this.potsDataSrcMethod ?? 'POST';
     const postDataSrcFormat = this.postDataSrcFormat ?? 'json';
 
-    const http = new HTTP(postDataSrcSource);
+    const http = new Http(postDataSrcSource);
 
     const rowIdKey = this.options.rowId;
     if (!rowIdKey) throw new ReferenceError('Please set a `rowId`');
@@ -365,7 +357,7 @@ export default class Editable<
     }
   }
 
-  private cancelNewRow(newRow: ApiRowMethods<TData>): Api<Node> {
+  private cancelNewRow(newRow: ApiRowMethods<D>): Api<Node> {
     return newRow.remove().draw(false);
   }
 
@@ -376,7 +368,7 @@ export default class Editable<
       orderable: field.options.orderable,
       visible: field.options.visible,
       data: field.options.name,
-      render: (data): string => {
+      render(data): string {
         if (typeof data !== 'boolean' && typeof data !== 'string')
           throw new TypeError(`Expected boolean instead received ${typeof data}`);
 
@@ -428,7 +420,7 @@ export default class Editable<
             "Can't have an edit button on this instance because the `editable` property is set to false.",
           );
 
-        return button.generateHTML(this.dataTable.row(row), this).outerHTML;
+        return button.generateHtml(this.dataTable.row(row), this).outerHTML;
       },
       createdCell: (cell): void => {
         (cell as HTMLTableCellElement).addEventListener('click', (evt): void => {
@@ -459,7 +451,7 @@ export default class Editable<
    *
    * @returns The new DataTables instance.
    */
-  private initDT(table: HTMLTableElement, config: Config): Api<TData> {
+  private initDatatables(table: HTMLTableElement, config: Config): Api<D> {
     return new DataTable(table, config);
   }
 }

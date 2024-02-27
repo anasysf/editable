@@ -13,11 +13,11 @@ export default class StringInput extends BaseEditor<'string'> {
     this._options = opts;
   }
 
-  public generateHTML(
+  public generateHtml(
     fieldName: string,
     defaultValue: HTMLInputElement['value'],
     rowIdx?: number,
-    editMode: boolean = true,
+    editMode = true,
   ): HTMLInputElement {
     const input = this.element;
     const options = this._options;
@@ -29,9 +29,9 @@ export default class StringInput extends BaseEditor<'string'> {
     input.required = options.required;
     input.readOnly = options.readonly;
     input.disabled = options.disabled;
-    options.minLength && (input.minLength = options.minLength);
-    options.maxLength && (input.maxLength = options.maxLength);
-    options.pattern && (input.pattern = options.pattern);
+    if (options.minLength) input.minLength = options.minLength;
+    if (options.maxLength) input.maxLength = options.maxLength;
+    if (options.pattern) input.pattern = options.pattern;
     input.placeholder = fieldName;
     input.defaultValue = defaultValue;
 

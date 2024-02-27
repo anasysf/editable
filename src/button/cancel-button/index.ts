@@ -1,6 +1,6 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../../editable';
-import type { JSONValue } from '../../types';
+import type { JsonValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
 import IconButtonBase from '../base';
 import { ButtonTypeIconMap } from '../types';
@@ -18,11 +18,11 @@ export default class CancelButton extends IconButtonBase<ButtonTypeIconMap.CANCE
     this._options = opts;
   }
 
-  public generateHTML<TData extends Record<string, JSONValue>>(
-    row: ApiRowMethods<TData>,
-    editable: Editable<TData, boolean>,
+  public generateHtml<T extends Record<string, JsonValue>>(
+    row: ApiRowMethods<T>,
+    editable: Editable<T, boolean>,
   ): HTMLSpanElement {
-    const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
+    const rowId = row.id().trim() === 'undefined' ? row.index() : row.id();
     const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
     if (!icon)
       throw new ReferenceError(
@@ -36,16 +36,16 @@ export default class CancelButton extends IconButtonBase<ButtonTypeIconMap.CANCE
       icon,
     });
 
-    return element.generateHTML();
+    return element.generateHtml();
   }
 
-  public onClick<TData extends Record<string, JSONValue>>(
+  public onClick<T extends Record<string, JsonValue>>(
     evt: MouseEvent,
-    row: ApiRowMethods<TData>,
-    oldRowData: TData,
-    _editable: Editable<TData, boolean>,
+    row: ApiRowMethods<T>,
+    oldRowData: T,
+    _editable: Editable<T, boolean>,
   ): void {
-    const target = evt.target;
+    const { target } = evt;
     if (!target || target instanceof HTMLTableCellElement) return;
 
     if (target instanceof HTMLElement) {

@@ -4,12 +4,7 @@ import type { EditorType } from '../../editor/types/options';
 import { exists, isObject, isString } from '../../utils/type-guard';
 import { stringNotEmpty } from '../../utils/validation';
 import type { EditableOptions, Options } from '../types/options';
-import type {
-  DataSrc,
-  DataSrcMethod,
-  IDataSrcGET,
-  IDataSrcPOST,
-} from '../types/options/dataSrc';
+import type { DataSrc, DataSrcGet, DataSrcMethod, DataSrcPost } from '../types/options/dataSrc';
 
 /**
  * Check if the dataSrc property passed is of type IDataSrc 'POST'.
@@ -17,7 +12,7 @@ import type {
  *
  * @returns If the dataSrc property passes the tests.
  */
-export function isIDataSrcPost(dataSrc: unknown): dataSrc is IDataSrcPOST {
+export function isDataSrcPostObj(dataSrc: unknown): dataSrc is DataSrcPost {
   return (
     isObject(dataSrc) &&
     'src' in dataSrc &&
@@ -36,7 +31,7 @@ export function isIDataSrcPost(dataSrc: unknown): dataSrc is IDataSrcPOST {
  *
  * @returns If the dataSrc property passes the tests.
  */
-export function isIDataSrcGet(dataSrc: unknown): dataSrc is IDataSrcGET {
+export function isDataSrcGetObj(dataSrc: unknown): dataSrc is DataSrcGet {
   return (
     isObject(dataSrc) &&
     'src' in dataSrc &&
@@ -58,19 +53,19 @@ export function isIDataSrcGet(dataSrc: unknown): dataSrc is IDataSrcGET {
  */
 export function isDataSrcString(
   dataSrc: unknown,
-): dataSrc is Exclude<DataSrc<DataSrcMethod>, IDataSrcGET | IDataSrcPOST> {
+): dataSrc is Exclude<DataSrc<DataSrcMethod>, DataSrcGet | DataSrcPost> {
   return isString(dataSrc) && stringNotEmpty(dataSrc);
 }
 
 export function isEditableOptions(options: Options<boolean>): options is EditableOptions {
-  return !exists(!!options.editable) || (exists(options.editable) && options.editable);
+  return !exists(Boolean(options.editable)) || (exists(options.editable) && options.editable);
 }
 
 export function isCheckboxEditor(
   editor?: BaseEditor<keyof EditorType>,
 ): editor is BaseEditor<'checkbox'> {
   return (
-    !!editor &&
+    Boolean(editor) &&
     editor instanceof Checkbox &&
     'activeLabel' in editor.options &&
     'inactiveLabel' in editor.options

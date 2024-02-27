@@ -1,7 +1,7 @@
 import type { WithRequired } from '../../../types';
 
-export interface Options {
+export type Options = {
   readonly color?: HTMLSpanElement['className'];
-}
+};
 
 export type NormalizedOptions = WithRequired<Options, 'color'>;

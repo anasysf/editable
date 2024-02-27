@@ -3,16 +3,16 @@ import type { EditorType } from '../../editor/types/options';
 
 export type FieldType = 'string' | 'num' | 'html';
 
-export interface OptionsBASE {
+export type OptionsBase = {
   /** The name of the field. */
   readonly name: string;
-}
+};
 
 /**
  * The field options.
  * @typeParam T - The field type.
  */
-export interface Options<T extends FieldType, E extends keyof EditorType> extends OptionsBASE {
+export type Options<T extends FieldType, E extends keyof EditorType> = {
   /** The type of the field. */
   readonly type?: T;
 
@@ -23,7 +23,7 @@ export interface Options<T extends FieldType, E extends keyof EditorType> extend
   readonly visible?: boolean;
 
   readonly editor?: BaseEditor<E>;
-}
+} & OptionsBase;
 
 export type RequiredOptions = 'visible' | 'orderable';
 

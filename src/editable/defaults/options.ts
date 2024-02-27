@@ -2,36 +2,36 @@ import { isString } from '../../utils/type-guard';
 import type { NormalizedOptions, Options } from '../types/options';
 import type { DataSrc, DataSrcMethod } from '../types/options/dataSrc';
 import type { IconMap, IconSrc } from '../types/options/iconMap';
-import type { IUpdateDataSrc, UpdateDataSrc } from '../types/options/updateDataSrc';
+import type { UpdateDataSrc, UpdateDataSrcObj } from '../types/options/updateDataSrc';
 import {
+  isDataSrcGetObj,
+  isDataSrcPostObj,
   isDataSrcString,
   isEditableOptions,
-  isIDataSrcGet,
-  isIDataSrcPost,
 } from '../utils/type-guard';
 
-function defaultDataSrc<T extends DataSrcMethod>(dataSrc: DataSrc<T>): DataSrc<T> {
-  if (isIDataSrcGet(dataSrc))
+function defaultDataSrc<T extends DataSrcMethod>(dataSrc: DataSrc<T>): DataSrc<DataSrcMethod> {
+  if (isDataSrcGetObj(dataSrc))
     return {
       src: dataSrc.src,
       method: dataSrc.method,
       prop: dataSrc.prop ?? '',
-    } as DataSrc<T>;
-  else if (isDataSrcString(dataSrc))
+    };
+  if (isDataSrcString(dataSrc))
     return {
       src: dataSrc,
       method: 'GET',
       prop: '',
-    } as DataSrc<T>;
-  else if (isIDataSrcPost(dataSrc))
+    };
+  if (isDataSrcPostObj(dataSrc))
     return {
       src: dataSrc.src,
       method: dataSrc.method,
       prop: dataSrc.prop ?? '',
       data: dataSrc.data,
       format: dataSrc.format,
-    } as DataSrc<T>;
-  else throw new TypeError('The `dataSrc` passed does not follow the correct schema.');
+    };
+  throw new TypeError('The `dataSrc` passed does not follow the correct schema.');
 }
 
 function defaultIconMap(iconMap?: IconMap): Required<IconMap> {
@@ -46,7 +46,7 @@ function defaultIconMap(iconMap?: IconMap): Required<IconMap> {
   };
 }
 
-function defaultUpdateDataSrc(updateDataSrc: UpdateDataSrc): IUpdateDataSrc {
+function defaultUpdateDataSrc(updateDataSrc: UpdateDataSrc): UpdateDataSrcObj {
   if (isString(updateDataSrc))
     return {
       src: updateDataSrc,
@@ -54,39 +54,35 @@ function defaultUpdateDataSrc(updateDataSrc: UpdateDataSrc): IUpdateDataSrc {
       format: 'json',
       prop: 'result.content',
     };
-  else
-    return {
-      src: updateDataSrc.src,
-      method: updateDataSrc.method ?? 'PUT',
-      format: updateDataSrc.format ?? 'json',
-      prop: updateDataSrc.prop ?? 'result.content',
-    };
+  return {
+    src: updateDataSrc.src,
+    method: updateDataSrc.method ?? 'PUT',
+    format: updateDataSrc.format ?? 'json',
+    prop: updateDataSrc.prop ?? 'result.content',
+  };
 }
 
 export function defaultOptions<E extends boolean | undefined>(
   options: Options<E>,
 ): NormalizedOptions<E> {
-  const fields = options.fields;
-  const buttons = options.buttons;
-  const editable = (options.editable ?? true) as E;
+  const { fields, buttons, deleteDataSrc, postDataSrc, rowId } = options;
   const dataSrc = defaultDataSrc(options.dataSrc);
   const iconSrc = options.iconSrc ?? ('fa' as IconSrc);
   const iconMap = defaultIconMap(options.iconMap);
+  const editable = (options.editable ?? true) as E;
   const updateDataSrc = isEditableOptions(options) && options.updateDataSrc;
-  const deleteDataSrc = options.deleteDataSrc;
-  const postDataSrc = options.postDataSrc;
-  const rowId = options.rowId;
 
+  /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
   return {
+    ...(updateDataSrc && { updateDataSrc: defaultUpdateDataSrc(updateDataSrc) }),
     buttons,
     dataSrc,
+    deleteDataSrc,
     editable,
-    fields,
     iconMap,
     iconSrc,
-    rowId,
-    deleteDataSrc,
     postDataSrc,
-    ...(updateDataSrc && { updateDataSrc: defaultUpdateDataSrc(updateDataSrc) }),
+    rowId,
+    fields,
   } as NormalizedOptions<E>;
 }

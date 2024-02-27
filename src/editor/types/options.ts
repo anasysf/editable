@@ -1,15 +1,16 @@
-import type { HTMLElementsWithValue, HTMLInputs } from '../../types';
+import type { HtmlElementsWithValue, HtmlInputs } from '../../types';
 
-// type EditorTypes = 'string' | 'number' | 'text';
+// Type EditorTypes = 'string' | 'number' | 'text';
 
-export interface EditorType {
+export type EditorType = {
   readonly string: HTMLInputElement;
   readonly number: HTMLInputElement;
   readonly text: HTMLTextAreaElement;
   readonly checkbox: HTMLInputElement;
-}
+  readonly select: HTMLSelectElement;
+};
 
-/* export type StringEditorType = Extract<EditorType, EditorType.STRING | EditorType.TEXT>;
+/* Export type StringEditorType = Extract<EditorType, EditorType.STRING | EditorType.TEXT>;
 export type NumberEditorType = Extract<EditorType, EditorType.NUMBER>;
 
 interface OptionsBASE<T extends EditorType> {
@@ -42,9 +43,9 @@ export type NormalizedOptions<T extends EditorType> = WithRequired<
   'required' | 'readonly' | 'disabled'
 >; */
 
-export interface OptionsBASE {
-  readonly className?: HTMLElementsWithValue['className'];
-  readonly required?: HTMLElementsWithValue['required'];
-  readonly readonly?: HTMLInputs['readOnly'];
-  readonly disabled?: HTMLElementsWithValue['disabled'];
-}
+export type OptionsBase = {
+  readonly className?: HtmlElementsWithValue['className'];
+  readonly required?: HtmlElementsWithValue['required'];
+  readonly readonly?: HtmlInputs['readOnly'];
+  readonly disabled?: HtmlElementsWithValue['disabled'];
+};

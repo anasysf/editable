@@ -1,6 +1,6 @@
 import type { Config, ConfigColumns } from 'datatables.net-bs5';
 import type { Options } from '../types/options';
-import { isDataSrcString, isIDataSrcPost } from '../utils/type-guard';
+import { isDataSrcPostObj, isDataSrcString } from '../utils/type-guard';
 
 /**
  * Set the default DataTable config.
@@ -10,24 +10,28 @@ import { isDataSrcString, isIDataSrcPost } from '../utils/type-guard';
  * @returns The DataTable's config.
  */
 export function defaultConfig(options: Options<boolean>, columns: ConfigColumns[]): Config {
-  const dataSrc = options.dataSrc;
-  const rowId = options.rowId;
+  const { dataSrc, rowId } = options;
+
+  const url = isDataSrcString(dataSrc) ? dataSrc : dataSrc.src;
+  const method = isDataSrcString(dataSrc)
+    ? 'GET'
+    : isDataSrcPostObj(dataSrc)
+      ? dataSrc.method
+      : 'GET';
+  const data = isDataSrcPostObj(dataSrc) ? dataSrc.data : undefined;
+  const contentType = isDataSrcPostObj(dataSrc)
+    ? dataSrc.format === 'json'
+      ? 'application/json; charset=UTF-8'
+      : 'application/x-www-form-urlencoded; charset=UTF-8'
+    : undefined;
 
   return {
     ajax: {
-      url: !isDataSrcString(dataSrc) ? dataSrc.src : dataSrc,
-      method: !isDataSrcString(dataSrc)
-        ? isIDataSrcPost(dataSrc)
-          ? dataSrc.method
-          : 'GET'
-        : 'GET',
-      data: isIDataSrcPost(dataSrc) ? dataSrc.data : undefined,
-      dataSrc: !isDataSrcString(dataSrc) ? dataSrc.prop ?? '' : '',
-      contentType: isIDataSrcPost(dataSrc)
-        ? dataSrc.format === 'json'
-          ? 'application/json; charset=UTF-8'
-          : 'application/x-www-form-urlencoded; charset=UTF-8'
-        : undefined,
+      url,
+      method,
+      data,
+      dataSrc: isDataSrcString(dataSrc) ? '' : dataSrc.prop ?? '',
+      contentType,
     },
     columns,
     rowId,

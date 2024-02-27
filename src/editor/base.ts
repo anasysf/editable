@@ -1,33 +1,19 @@
-import type { HTMLElementsWithValue } from '../types';
+import type { HtmlElementsWithValue } from '../types';
 import type { EditorType } from './types/options';
 
 export default abstract class BaseEditor<
   T extends keyof EditorType,
-  E extends HTMLElementsWithValue = EditorType[T],
+  E extends HtmlElementsWithValue = EditorType[T],
 > {
-  public readonly type: T;
-  public readonly fragment: DocumentFragment;
-  public readonly element: E;
-
-  protected constructor(type: T, fragment: DocumentFragment, element: E) {
-    this.type = type;
-    this.fragment = fragment;
-    this.element = element;
-  }
+  protected constructor(
+    public readonly type: T,
+    public readonly fragment: DocumentFragment,
+    public readonly element: E,
+  ) {}
 
   public validateElement(): boolean {
     return this.element.checkValidity();
   }
-
-  public abstract generateHTML(
-    fieldName: string,
-    defaultValue:
-      | E['value']
-      | HTMLInputElement['defaultChecked']
-      | HTMLInputElement['valueAsNumber'],
-    rowIdx?: number,
-    editMode?: boolean,
-  ): E;
 
   public getElementValue(): boolean | string | number {
     if (this.element instanceof HTMLInputElement) {
@@ -60,9 +46,20 @@ export default abstract class BaseEditor<
           break;
         default:
           this.element.value = String(newValue);
+          break;
       }
     }
 
     this.element.value = String(newValue);
   }
+
+  public abstract generateHtml(
+    fieldName: string,
+    defaultValue:
+      | E['value']
+      | HTMLInputElement['defaultChecked']
+      | HTMLInputElement['valueAsNumber'],
+    rowIdx?: number,
+    editMode?: boolean,
+  ): E;
 }

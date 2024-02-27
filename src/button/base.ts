@@ -1,7 +1,7 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../editable';
 import type { IconMap, IconSrc } from '../editable/types/options/iconMap';
-import type { JSONValue } from '../types';
+import type { JsonValue } from '../types';
 import type { ButtonTypeIconMap } from './types';
 
 export default abstract class IconButtonBase<T extends ButtonTypeIconMap> {
@@ -19,15 +19,15 @@ export default abstract class IconButtonBase<T extends ButtonTypeIconMap> {
     return iconMap[iconSrc][this.type];
   }
 
-  public abstract generateHTML<TData extends Record<string, JSONValue>>(
-    row: ApiRowMethods<TData>,
-    editable: Editable<TData, boolean | undefined>,
+  public abstract generateHtml<T extends Record<string, JsonValue>>(
+    row: ApiRowMethods<T>,
+    editable: Editable<T, boolean | undefined>,
   ): HTMLSpanElement;
 
-  public abstract onClick<TData extends Record<string, JSONValue>>(
+  public abstract onClick<T extends Record<string, JsonValue>>(
     evt: MouseEvent,
-    row: ApiRowMethods<TData>,
-    oldRowData: TData,
-    editable: Editable<TData, boolean | undefined>,
+    row: ApiRowMethods<T>,
+    oldRowData: T,
+    editable: Editable<T, boolean | undefined>,
   ): void;
 }

@@ -15,7 +15,7 @@ const editable = new Editable('my-table', {
     prop: 'products',
   },
   fields: [
-    /* new Field({
+    /* New Field({
       name: 'id',
       type: 'num',
     }), */
@@ -33,9 +33,7 @@ const editable = new Editable('my-table', {
     }),
   ],
   buttons: [new EditButton(), new DeleteButton()],
-  updateDataSrc: {
-    src: 'https://dummyjson.com/products/1',
-  },
+  // UpdateDataSrc: 'https://dummyjson.com/products/1',
   rowId: 'id',
   deleteDataSrc: 'https://dummyjson.com/products/1',
   postDataSrc: 'https://dummyjson.com/products/add',

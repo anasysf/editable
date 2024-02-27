@@ -1,12 +1,12 @@
-import type { HTTPMethod, HTTPRequestFormat } from '../../../types';
+import type { HttpMethod, HttpRequestFormat } from '../../../types';
 
-export type UpdateDataSrcMethod = Extract<HTTPMethod, 'PUT' | 'PATCH' | 'POST'>;
+export type UpdateDataSrcMethod = Extract<HttpMethod, 'PUT' | 'PATCH' | 'POST'>;
 
-export interface IUpdateDataSrc {
+export type UpdateDataSrcObj = {
   readonly src: string;
   readonly method?: UpdateDataSrcMethod;
-  readonly format?: HTTPRequestFormat;
+  readonly format?: HttpRequestFormat;
   readonly prop?: string;
-}
+};
 
-export type UpdateDataSrc = IUpdateDataSrc | string;
+export type UpdateDataSrc = UpdateDataSrcObj | string;

@@ -3,12 +3,11 @@ export enum Events {
   DELETE = 'delete',
 }
 
-/* eslint-disable-next-line */
 type DeleteEvent = {
   readonly deleteRow: (confirmDelete?: boolean) => Promise<void>;
 };
 
-export interface EventMap {
+export type EventMap = {
   [key: PropertyKey]: Record<PropertyKey, unknown>;
 
   [Events.UPDATED]: {
@@ -16,4 +15,4 @@ export interface EventMap {
   };
 
   readonly [Events.DELETE]: DeleteEvent;
-}
+};

@@ -1,7 +1,7 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../../editable';
 import { replaceDeleteIcon, replaceEditIcon } from '../../editable/utils';
-import type { HTMLElementsWithValue, JSONValue } from '../../types';
+import type { HtmlElementsWithValue, JsonValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
 import IconButtonBase from '../base';
 import CancelButton from '../cancel-button';
@@ -33,11 +33,11 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
     return this.color;
   }
 
-  public generateHTML<TData extends Record<string, JSONValue>>(
-    row: ApiRowMethods<TData>,
-    editable: Editable<TData, boolean>,
+  public generateHtml<T extends Record<string, JsonValue>>(
+    row: ApiRowMethods<T>,
+    editable: Editable<T, boolean>,
   ): HTMLSpanElement {
-    const rowId = row.id().trim() !== 'undefined' ? row.id() : row.index();
+    const rowId = row.id().trim() === 'undefined' ? row.index() : row.id();
     const icon = super.getIconByType(editable.iconSrc, editable.iconMap);
     if (!icon)
       throw new ReferenceError(
@@ -51,16 +51,16 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
       icon,
     });
 
-    return element.generateHTML();
+    return element.generateHtml();
   }
 
-  public onClick<TData extends Record<string, JSONValue>>(
+  public onClick<T extends Record<string, JsonValue>>(
     evt: MouseEvent,
-    row: ApiRowMethods<TData>,
-    _oldRowData: TData,
-    editable: Editable<TData, boolean>,
+    row: ApiRowMethods<T>,
+    _oldRowData: T,
+    editable: Editable<T, boolean>,
   ): void {
-    const target = evt.target;
+    const { target } = evt;
     if (!target || target instanceof HTMLTableCellElement) return;
 
     if (target instanceof HTMLElement) {
@@ -77,10 +77,10 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
     const rowData = row.data();
     const oldRowData = structuredClone(rowData);
     const rowIdx = row.index();
-    const fields = editable.fields;
+    const { fields } = editable;
 
-    const iconSrc = editable.iconSrc;
-    const iconMap = editable.iconMap;
+    const { iconSrc } = editable;
+    const { iconMap } = editable;
 
     const submitButton = new SubmitButton();
     const submitIcon = submitButton.getIconByType(iconSrc, iconMap);
@@ -96,22 +96,22 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
         `Please set a 'cancel-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
       );
 
-    const elements: HTMLElementsWithValue[] = [];
+    const elements: HtmlElementsWithValue[] = [];
     for (const [idx, field] of fields.entries()) {
       const fieldOpts = field.options;
 
-      const editor = fieldOpts.editor;
+      const { editor } = fieldOpts;
       if (!editor) continue;
 
-      const fieldName = fieldOpts.name as keyof TData;
+      const fieldName = fieldOpts.name as keyof T;
       if (!(fieldName in rowData)) continue;
 
       const td = tds.item(idx);
       if (!td) continue;
 
-      const element = editor.generateHTML(
+      const element = editor.generateHtml(
         fieldName as Extract<keyof typeof fieldName, string>,
-        rowData[fieldName] as Extract<TData[typeof fieldName], string | boolean>,
+        rowData[fieldName] as Extract<T[typeof fieldName], string | boolean>,
         rowIdx,
       );
 
