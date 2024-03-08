@@ -86,13 +86,12 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
         `Please set a 'submit-row' icon for the 'iconSrc' specified: ${iconSrc}.`,
       );
 
-    const formData: Record<
-      Extract<T, keyof T>,
-      Exclude<JsonValue, JsonArray | JsonObject | undefined>
-    > = rowIdMap as Record<
-      Extract<T, keyof T>,
-      Exclude<JsonValue, JsonArray | JsonObject | undefined>
-    >;
+    /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
+    const formData = {
+      ...rowData,
+      ...rowIdMap,
+      /* eslint-disable-next-line */
+    } as Record<Extract<T, keyof T>, Exclude<JsonValue, JsonArray | JsonObject | null>>;
     const invalidElements: HtmlElementsWithValue[] = [];
 
     for (const [idx, field] of fields.entries()) {
@@ -100,8 +99,8 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       const { editor } = fieldOpts;
       if (!editor) continue;
 
-      const fieldName = fieldOpts.name as keyof T;
-      if (!(fieldName in rowData)) continue;
+      const fieldName = fieldOpts.name;
+      // If (!(fieldName in rowData)) continue;
 
       const td = tds.item(idx);
       if (!td) continue;
@@ -116,7 +115,11 @@ export default class SubmitButton extends IconButtonBase<ButtonTypeIconMap.SUBMI
       }
 
       formData[fieldName as Extract<T, keyof T>] = editor.getElementValue();
-      rowData[fieldName] = editor.getElementValue() as T[typeof fieldName];
+      /* If (isSelectStaticEditor(editor))
+        rowData[fieldName as keyof T] = ((): string =>
+          editor.getElementValue() as string) as T[keyof T]; */
+      // else
+      rowData[fieldName as keyof T] = editor.getElementValue() as T[typeof fieldName];
     }
 
     if (invalidElements.length !== 0) return;

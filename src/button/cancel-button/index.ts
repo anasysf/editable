@@ -45,6 +45,7 @@ export default class CancelButton extends IconButtonBase<ButtonTypeIconMap.CANCE
     oldRowData: T,
     _editable: Editable<T, boolean>,
   ): void {
+    evt.stopImmediatePropagation();
     const { target } = evt;
     if (!target || target instanceof HTMLTableCellElement) return;
 

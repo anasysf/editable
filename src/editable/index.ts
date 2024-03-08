@@ -7,10 +7,11 @@ import { ButtonTypeIconMap } from '../button/types';
 import type BaseEditor from '../editor/base';
 import type Checkbox from '../editor/input/checkbox';
 import StringInput from '../editor/input/string-input';
-import type { EditorType } from '../editor/types/options';
+import type { EditorTypeMap } from '../editor/types/options';
 import { isHtmlElementsWithValue } from '../editor/utils/type-guard';
 import type Field from '../field';
 import type { FieldType } from '../field/types/options';
+import EditorService from '../services/editor';
 import type {
   HtmlElementsWithValue,
   HttpRequestFormat,
@@ -31,7 +32,7 @@ import type { IconMap, IconSrc } from './types/options/iconMap';
 import type { PostDataSrcMethod, Response } from './types/options/postDataSrc';
 import type { UpdateDataSrc, UpdateDataSrcMethod } from './types/options/updateDataSrc';
 import { replaceDeleteIcon, replaceEditIcon } from './utils';
-import { isCheckboxEditor, isEditableOptions } from './utils/type-guard';
+import { isCheckboxEditor, isEditableOptions, isSelectStaticEditor } from './utils/type-guard';
 import { validateTableElement } from './utils/validation';
 
 /**
@@ -105,7 +106,7 @@ export default class Editable<
    *
    * @returns An array of the fields.
    */
-  public get fields(): Array<Field<FieldType, keyof EditorType>> {
+  public get fields(): Array<Field<FieldType, keyof EditorTypeMap>> {
     return this.options.fields;
   }
 
@@ -238,13 +239,13 @@ export default class Editable<
    *
    * @returns A Map of the fields.
    */
-  private get fieldsMap(): Map<string, Field<FieldType, keyof EditorType>> {
+  private get fieldsMap(): Map<string, Field<FieldType, keyof EditorTypeMap>> {
     return new Map(this.fields.map((field) => [field.options.name, field]));
   }
 
   private defaultEditorValue(
     editor: BaseEditor<
-      keyof EditorType,
+      keyof EditorTypeMap,
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ): false | '' | 0 {
@@ -382,7 +383,26 @@ export default class Editable<
     };
   }
 
-  private renderField(field: Field<FieldType, keyof EditorType>): ConfigColumns {
+  private renderSelectStaticField(field: Field<'string', 'select-static'>): ConfigColumns {
+    return {
+      name: field.options.name,
+      type: field.options.type,
+      orderable: field.options.orderable,
+      visible: field.options.visible,
+      data(row): string {
+        const { editor } = field.options;
+        const editorService = new EditorService(editor);
+
+        const { prop, data, id } = editorService.instance.options;
+        const result = data.find((obj) => obj[id] === row[id]);
+        if (!result) throw new ReferenceError('Wrong data schema.');
+
+        return String(result[prop]);
+      },
+    };
+  }
+
+  private renderField(field: Field<FieldType, keyof EditorTypeMap>): ConfigColumns {
     return {
       name: field.options.name,
       type: field.options.type,
@@ -400,10 +420,17 @@ export default class Editable<
    * @returns An array of ConfigColumns.
    */
   private fieldsMapToColumns(): ConfigColumns[] {
-    return Array.from(this.fieldsMap.values()).map<ConfigColumns>((field) =>
-      isCheckboxEditor(field.options.editor)
+    return Array.from(this.fieldsMap.values()).map<ConfigColumns>(
+      (field) => {
+        if (isCheckboxEditor(field.options.editor))
+          return this.renderCheckboxField(field as Field<'html', 'checkbox'>);
+        if (isSelectStaticEditor(field.options.editor))
+          return this.renderSelectStaticField(field as Field<'string', 'select-static'>);
+        return this.renderField(field);
+      },
+      /* IsCheckboxEditor(field.options.editor)
         ? this.renderCheckboxField(field as Field<'html', 'checkbox'>)
-        : this.renderField(field),
+        : this.renderField(field), */
     );
   }
 
@@ -423,17 +450,21 @@ export default class Editable<
         return button.generateHtml(this.dataTable.row(row), this).outerHTML;
       },
       createdCell: (cell): void => {
-        (cell as HTMLTableCellElement).addEventListener('click', (evt): void => {
-          const tr = (cell as HTMLTableCellElement).closest('tr');
-          if (!tr)
-            throw new Error(
-              'Could not find the closest row to this cell this is a bug, REPORT IMMEDIATLY.',
-            );
+        (cell as HTMLTableCellElement).addEventListener(
+          'click',
+          (evt): void => {
+            const tr = (cell as HTMLTableCellElement).closest('tr');
+            if (!tr)
+              throw new Error(
+                'Could not find the closest row to this cell this is a bug, REPORT IMMEDIATLY.',
+              );
 
-          const row = this.dataTable.row(`#${tr.id}`);
+            const row = this.dataTable.row(`#${tr.id}`);
 
-          button.onClick(evt, row, row.data(), this);
-        });
+            button.onClick(evt, row, row.data(), this);
+          },
+          false,
+        );
       },
     }));
   }

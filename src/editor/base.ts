@@ -1,11 +1,11 @@
 import type { HtmlElementsWithValue } from '../types';
-import type { EditorType } from './types/options';
+import type { EditorTypeMap } from './types/options';
 
 export default abstract class BaseEditor<
-  T extends keyof EditorType,
-  E extends HtmlElementsWithValue = EditorType[T],
+  T extends keyof EditorTypeMap,
+  E extends HtmlElementsWithValue = EditorTypeMap[T],
 > {
-  protected constructor(
+  public constructor(
     public readonly type: T,
     public readonly fragment: DocumentFragment,
     public readonly element: E,

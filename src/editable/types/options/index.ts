@@ -1,6 +1,6 @@
 import type IconButtonBase from '../../../button/base';
 import type { ButtonTypeIconMap } from '../../../button/types';
-import type { EditorType } from '../../../editor/types/options';
+import type { EditorTypeMap } from '../../../editor/types/options';
 import type Field from '../../../field';
 import type { FieldType } from '../../../field/types/options';
 import { type WithRequired } from '../../../types';
@@ -19,7 +19,7 @@ export type OptionsBase<E extends boolean | undefined> = {
    */
   readonly dataSrc: DataSrc<DataSrcMethod>;
 
-  readonly fields: Array<Field<FieldType, keyof EditorType>>;
+  readonly fields: Array<Field<FieldType, keyof EditorTypeMap>>;
 
   readonly buttons?: Array<IconButtonBase<ButtonTypeIconMap>>;
 
@@ -32,7 +32,7 @@ export type OptionsBase<E extends boolean | undefined> = {
   readonly deleteDataSrc?: DeleteDataSrc;
 
   readonly postDataSrc?: PostDataSrc;
-}
+};
 
 export type EditableOptions = OptionsBase<true> & {
   readonly updateDataSrc: UpdateDataSrc;

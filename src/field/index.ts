@@ -1,4 +1,4 @@
-import type { EditorType } from '../editor/types/options';
+import type { EditorTypeMap } from '../editor/types/options';
 import { defaultOptions } from './defaults/options';
 import type { FieldType, NormalizedOptions, Options } from './types/options';
 
@@ -6,7 +6,7 @@ import type { FieldType, NormalizedOptions, Options } from './types/options';
  * Class representing a field instance.
  * @typeParam T - The field type.
  */
-export default class Field<T extends FieldType, E extends keyof EditorType> {
+export default class Field<T extends FieldType, E extends keyof EditorTypeMap | undefined> {
   /** The options passed to the Field instance. */
   public readonly options: NormalizedOptions<T, E>;
 

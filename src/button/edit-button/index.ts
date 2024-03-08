@@ -1,6 +1,7 @@
 import type { ApiRowMethods } from 'datatables.net-bs5';
 import type Editable from '../../editable';
 import { replaceDeleteIcon, replaceEditIcon } from '../../editable/utils';
+import { isSelectStaticEditor } from '../../editable/utils/type-guard';
 import type { HtmlElementsWithValue, JsonValue } from '../../types';
 import Icon from '../../utils/html-elements/icon';
 import IconButtonBase from '../base';
@@ -104,14 +105,24 @@ export default class EditButton extends IconButtonBase<ButtonTypeIconMap.EDIT> {
       if (!editor) continue;
 
       const fieldName = fieldOpts.name as keyof T;
-      if (!(fieldName in rowData)) continue;
+      // TODO: FIND AN ALTERNATIVE SOLUTION
+      // If (!(fieldName in rowData)) continue;
 
       const td = tds.item(idx);
       if (!td) continue;
 
+      let defaultValue = rowData[fieldName] as Extract<T[typeof fieldName], string | boolean>;
+      if (isSelectStaticEditor(editor)) {
+        const { prop, data, id } = editor.options;
+        const result = data.find((obj) => obj[id] === rowData[id]);
+        if (!result) throw new ReferenceError('Wrong data schema.');
+
+        defaultValue = result[prop] as Extract<T[typeof fieldName], string | boolean>;
+      }
+
       const element = editor.generateHtml(
         fieldName as Extract<keyof typeof fieldName, string>,
-        rowData[fieldName] as Extract<T[typeof fieldName], string | boolean>,
+        defaultValue,
         rowIdx,
       );
 

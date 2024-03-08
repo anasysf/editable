@@ -1,4 +1,4 @@
-export function exists<T>(target: T): target is Exclude<T, undefined> {
+export function exists<T>(target: T): target is NonNullable<T> {
   return Boolean(target);
 }
 

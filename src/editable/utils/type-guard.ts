@@ -1,6 +1,7 @@
 import type BaseEditor from '../../editor/base';
 import Checkbox from '../../editor/input/checkbox';
-import type { EditorType } from '../../editor/types/options';
+import SelectStatic from '../../editor/select/select-static';
+import type { EditorTypeMap } from '../../editor/types/options';
 import { exists, isObject, isString } from '../../utils/type-guard';
 import { stringNotEmpty } from '../../utils/validation';
 import type { EditableOptions, Options } from '../types/options';
@@ -62,7 +63,7 @@ export function isEditableOptions(options: Options<boolean>): options is Editabl
 }
 
 export function isCheckboxEditor(
-  editor?: BaseEditor<keyof EditorType>,
+  editor?: BaseEditor<keyof EditorTypeMap>,
 ): editor is BaseEditor<'checkbox'> {
   return (
     Boolean(editor) &&
@@ -70,4 +71,10 @@ export function isCheckboxEditor(
     'activeLabel' in editor.options &&
     'inactiveLabel' in editor.options
   );
+}
+
+export function isSelectStaticEditor(
+  editor?: BaseEditor<keyof EditorTypeMap>,
+): editor is SelectStatic {
+  return Boolean(editor) && editor instanceof SelectStatic;
 }

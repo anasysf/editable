@@ -59,6 +59,7 @@ export default class DeleteButton extends IconButtonBase<ButtonTypeIconMap.DELET
     _oldRowData: T,
     editable: Editable<T, boolean>,
   ): void {
+    evt.stopImmediatePropagation();
     const { target } = evt;
     if (!target || target instanceof HTMLTableCellElement) return;
 

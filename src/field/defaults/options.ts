@@ -1,4 +1,4 @@
-import type { EditorType } from '../../editor/types/options';
+import type { EditorTypeMap } from '../../editor/types/options';
 import type { FieldType, NormalizedOptions, Options, RequiredOptions } from '../types/options';
 
 /**
@@ -10,7 +10,7 @@ import type { FieldType, NormalizedOptions, Options, RequiredOptions } from '../
  *
  * @returns The default options.
  */
-export function defaultOptions<T extends FieldType, E extends keyof EditorType>(
+export function defaultOptions<T extends FieldType, E extends keyof EditorTypeMap | undefined>(
   options: Options<T, E>,
 ): NormalizedOptions<T, E> {
   const defaultOpts = {
